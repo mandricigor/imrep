@@ -177,7 +177,7 @@ class ImReP(object):
 
     def doComputeClones(self):
         clones = self.__full_cdr3()
-        if self.__settings.overlapStep:
+        if not self.__settings.noOverlapStep:
             clones2 = self.__vj_handshakes()
             clones.extend(clones2)
         clones = Counter(clones)
@@ -197,7 +197,7 @@ if __name__ == "__main__":
 
     optional_arguments = ap.add_argument_group("Optional Inputs")
     optional_arguments.add_argument("-o", "--overlapLen", help="overlap length between v and j", type=int)
-    optional_arguments.add_argument("-s", "--overlapStep", help="whether to execute overlap step with suffix trees", type=bool)
+    optional_arguments.add_argument("--noOverlapStep", help="whether to execute overlap step with suffix trees", dest="noOverlapStep", action="store_true")
     optional_arguments.add_argument("-c", "--castThreshold", help="threshold for CAST clustering algorithm", type=float)
 
     args = ap.parse_args()
@@ -208,14 +208,14 @@ if __name__ == "__main__":
     set_dict = {
         'fastqfile': fastqfile,
         'overlapLen': 10,
-        'overlapStep': True,
+        'noOverlapStep': False,
         'castThreshold': 0.2,
     }
 
     if args.overlapLen:
         set_dict["overlapLen"] = args.overlapLen
-    if args.overlapStep:
-        set_dict["overlapStep"] = args.overlapStep
+    if args.noOverlapStep is not None:
+        set_dict["noOverlapStep"] = args.noOverlapStep
     if args.castThreshold:
         set_dict["castThreshold"] = args.castThreshold
 
