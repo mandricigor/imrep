@@ -58,6 +58,16 @@ def nucleotide2protein2(inString):
 def dumpClones(clones, outFile):
     with open(outFile, "w") as f:
         for clone in clones:
-            f.write("%s\n" % clone)
+            f.write(("\t".join(["%s"] * len(clone)) + "\n") % tuple(clone))
 
+
+
+def getGeneType(geneName):
+    """
+    Hopefully, it is safe
+    """
+    geneType = geneName.split("|")[1].split("*")[0]
+    if "-" in geneType:
+        geneType = geneType.split("-")[0]
+    return geneType
 

@@ -94,7 +94,9 @@ class Cast(object):
         partition = self.__cast(nodes, threshold)
         cdr3s = []
         for part in partition:
-            cdr3s.append(max(part, key=lambda z: z[1])[0])
+            representative = max(part, key=lambda z: z[1])[0]
+            count_cluster = sum([x[1] for x in part])
+            cdr3s.append([representative, count_cluster])
         return cdr3s
 
 

@@ -103,9 +103,9 @@ class ImReP(object):
         for record in self._fastq_handle:
             pSequences= nucleotide2protein2(str(record.seq))
             if pSequences:
-                self.pSeq_map[record.id] = pSequences
-                vi_list = []
-                jay_list = []
+                #self.pSeq_map[record.id] = pSequences
+                #vi_list = []
+                #jay_list = []
                 for pSeq in pSequences:
                     v_anchors = {}
                     j_anchors = {}
@@ -113,7 +113,7 @@ class ImReP(object):
                         if pSeq.rfind(v) != -1:
                             v_types = []
                             pos = pSeq.rfind(v)
-                            read_part_v = pSeq[pos:]
+                            #read_part_v = pSeq[pos:]
                             for s in self.anchor_v[v]:
                                 if len(pSeq[:pos + len(v)]) > 0 and jellyfish.levenshtein_distance(unicode(pSeq[:pos + len(v)]), unicode(s[-len(pSeq[:pos + len(v)]):])) <= 0:
                                     tip = self.v_tip[s]
@@ -131,21 +131,35 @@ class ImReP(object):
                                     j_types.append(tip)
                             if j_types:
                                 j_anchors[j] = j_types
+                    #print v_anchors, j_anchors
                     if v_anchors and j_anchors:
-                        for v in v_anchors:
-                            for j in j_anchors:
+                        for v, v_t in v_anchors.items():
+                            for j, j_t in j_anchors.items():
                                 vpos, jpos = pSeq.rfind(v), pSeq.find(j) + len(j)
-                                full_cdr3.append(pSeq[vpos: jpos])
+                                cdr3_region = pSeq[vpos: jpos]
+                                full_cdr3.append(cdr3_region)
+                                if cdr3_region not in self.pSeq_map:
+                                    vs = set(map(getGeneType, v_t))
+                                    js = set(map(getGeneType, j_t))
+                                    self.pSeq_map[cdr3_region] = {"v": vs, "j": js}
                     elif v_anchors:
-                        for v in v_anchors:
+                        for v, v_t in v_anchors.items():
                             vpos = pSeq.rfind(v)
-                            if len(pSeq[vpos:]) > 5:
-                                self.just_v.append(pSeq[vpos:])
+                            partial_in_v = pSeq[vpos:]
+                            if len(partial_in_v) > 5:
+                                self.just_v.append(partial_in_v)
+                                if partial_in_v not in self.pSeq_map:
+                                    vs = set(map(getGeneType, v_t))
+                                    self.pSeq_map[partial_in_v] = {"v": vs}
                     elif j_anchors:
-                        for j in j_anchors:
+                        for j, j_t in j_anchors.items():
                             jpos = pSeq.find(j)
-                            if len(pSeq[:jpos + len(j)]) > 5:
-                                self.just_j.append(pSeq[:jpos + len(j)])
+                            partial_in_j = pSeq[:jpos + len(j)]
+                            if len(partial_in_j) > 5:
+                                self.just_j.append(partial_in_j)
+                                if partial_in_j not in self.pSeq_map:
+                                    js = set(map(getGeneType, j_t))
+                                    self.pSeq_map[partial_in_j] = {"j": js}
         return full_cdr3
 
     def __vj_handshakes(self):
@@ -166,13 +180,17 @@ class ImReP(object):
 
         for j, jj in just_j.items():
             overlap, index, terminal = stree.search_stree(j)
-            if terminal and len(j[:overlap]) > self.__settings.overlapLen:
+            if terminal and len(j[:overlap]) >= self.__settings.overlapLen:
                 overlapping_v = itree.search(index)
+                newly_born_cdr3 = list(overlapping_v)[0].data + j[overlap:]
                 countV = just_v[list(overlapping_v)[0].data]
                 countJ = just_j[j]
                 countVJ = min(countV, countJ)
                 for x in range(countVJ):
-                    handshakes.append(list(overlapping_v)[0].data + j[overlap:])
+                    handshakes.append(newly_born_cdr3)
+                if newly_born_cdr3 not in self.pSeq_map:
+                    self.pSeq_map[newly_born_cdr3] = {"v": self.pSeq_map[list(overlapping_v)[0].data]["v"],
+                                                      "j": self.pSeq_map[j]["j"]}
         return handshakes
 
     def doComputeClones(self):
@@ -183,6 +201,8 @@ class ImReP(object):
         clones = Counter(clones)
         cast_clustering = Cast(clones)
         clustered_clones = cast_clustering.doCast(self.__settings.castThreshold)
+        for clone in clustered_clones:
+            clone.extend([",".join(self.pSeq_map[clone[0]]["v"]), ",".join(self.pSeq_map[clone[0]]["j"])])
         return clustered_clones
 
 
