@@ -38,6 +38,8 @@ class ImReP(object):
         self.anchor_v = {}
         self.v_tip = {}
 
+        self.d_seqs = {}
+
         self.jayset = set()
         self.jay_pieces = {}
         self.anchor_j = {}
@@ -51,6 +53,7 @@ class ImReP(object):
         self.just_j = []
 
         self.__populate_v()
+        self.__populate_d()
         self.__populate_j()
         self.__read_reads()
 
@@ -73,12 +76,16 @@ class ImReP(object):
                         self.anchor_v[anchor].append(seq)
                         self.v_tip[seq] = record.id
 
+    def __populate_d(self):
+        for record in SeqIO.parse("db/IGHD.faa", "fasta"):
+            self.d_seqs[record.id] = record.seq.tostring()
 
     def __populate_j(self):
         for record in SeqIO.parse("db/IGHJ.faa", "fasta"):
             posW = record.seq.tostring().rfind("W")
             if posW != -1:
                 anchor = record.seq.tostring()[:posW+1]
+                print anchor
                 self.jayset.add(anchor)
                 seq = record.seq.tostring()
                 cut = 0
@@ -101,7 +108,7 @@ class ImReP(object):
             return []
         full_cdr3 = []
         for record in self._fastq_handle:
-            pSequences= nucleotide2protein2(str(record.seq))
+            pSequences = nucleotide2protein2(str(record.seq))
             if pSequences:
                 #self.pSeq_map[record.id] = pSequences
                 #vi_list = []
@@ -182,6 +189,7 @@ class ImReP(object):
             overlap, index, terminal = stree.search_stree(j)
             if terminal and len(j[:overlap]) >= self.__settings.overlapLen:
                 overlapping_v = itree.search(index)
+                print j, list(overlapping_v)[0].data, "AAAAAAAAAAAAAAA"
                 newly_born_cdr3 = list(overlapping_v)[0].data + j[overlap:]
                 countV = just_v[list(overlapping_v)[0].data]
                 countJ = just_j[j]
@@ -193,6 +201,15 @@ class ImReP(object):
                                                       "j": self.pSeq_map[j]["j"]}
         return handshakes
 
+
+    def __map_j(self, seq):
+        d_types = set()
+        for d_t, d_seq in self.d_seqs.items():
+            if seq.find(d_seq) != -1:
+                d_types.add(getGeneType(d_t))
+        return d_types
+
+
     def doComputeClones(self):
         clones = self.__full_cdr3()
         if not self.__settings.noOverlapStep:
@@ -202,7 +219,11 @@ class ImReP(object):
         cast_clustering = Cast(clones)
         clustered_clones = cast_clustering.doCast(self.__settings.castThreshold)
         for clone in clustered_clones:
-            clone.extend([",".join(self.pSeq_map[clone[0]]["v"]), ",".join(self.pSeq_map[clone[0]]["j"])])
+            j_types = self.__map_j(clone[0])
+            if j_types:
+                clone.extend([",".join(self.pSeq_map[clone[0]]["v"]),
+                              ",".join(j_types),
+                              ",".join(self.pSeq_map[clone[0]]["j"])])
         return clustered_clones
 
 
