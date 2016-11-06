@@ -59,9 +59,8 @@ class ImReP(object):
         #------------------------
 
 
-
-        self.vis = []
-        self.jays = []
+        self.vis = {}
+        self.jays = {}
         self.__populate_v()
         #self.__populate_d()
         self.__populate_j()
@@ -69,14 +68,19 @@ class ImReP(object):
 
 
     def __populate_v(self):
-        for record in SeqIO.parse("db/IGHV.faa", "fasta"):
-            if "partial in 3'" not in record.description:
-                posC = record.seq.tostring().rfind("C")
-                if posC != -1 and len(record.seq.tostring()) - posC < 5:
-                    anchor = record.seq.tostring()[posC + 1:]
-                    rest = record.seq.tostring()[len(record.seq.tostring()) - 40 :posC]
-                    self.vis.append((rest, anchor, getGeneType(record.id)))
-
+        chains_v = ["db/IGHV.faa", "db/IGKV.faa", "db/IGLV.faa", 
+                    "db/TRAV.faa", "db/TRBV.faa", "db/TRDV.faa", "db/TRGV.faa"]
+        for ch_v_file in chains_v:
+            vis = []
+            for record in SeqIO.parse(ch_v_file, "fasta"):
+                if "partial in 3'" not in record.description:
+                    posC = record.seq.tostring().rfind("C")
+                    if posC != -1 and len(record.seq.tostring()) - posC < 5:
+                        anchor = record.seq.tostring()[posC + 1:]
+                        rest = record.seq.tostring()[len(record.seq.tostring()) - 40 :posC]
+                        vis.append((rest, anchor, getGeneType(record.id)))
+            chain_name = ch_v_file.split("/")[-1].split(".")[0][:-1]
+            self.vis[chain_name] = vis
 
     #def __populate_d(self):
     #    for record in SeqIO.parse("db/IGHD.faa", "fasta"):
@@ -84,16 +88,22 @@ class ImReP(object):
 
 
     def __populate_j(self):
-        for record in SeqIO.parse("db/IGHJ.faa", "fasta"):
-            posW = record.seq.tostring().rfind("W")
-            if posW != -1:
-                anchor = record.seq.tostring()[:posW]
-                rest = record.seq.tostring()[posW + 1:40]
-                self.jays.append((anchor, rest, getGeneType(record.id)))
+        chains_j = ["db/IGHJ.faa", "db/IGKJ.faa", "db/IGLJ.faa", 
+                    "db/TRAJ.faa", "db/TRBJ.faa", "db/TRDJ.faa", "db/TRGJ.faa"]
+        for ch_j_file in chains_j:
+            jays = []
+            for record in SeqIO.parse(ch_j_file, "fasta"):
+                letter = "F"
+                if "IGHJ" in ch_j_file:
+                    letter = "W"
+                posW = record.seq.tostring().rfind(letter)
+                if posW != -1:
+                    anchor = record.seq.tostring()[:posW]
+                    rest = record.seq.tostring()[posW + 1:40]
+                    jays.append((anchor, rest, getGeneType(record.id)))
+            chain_name = ch_j_file.split("/")[-1].split(".")[0][:-1]
+            self.jays[chain_name] = jays
 
-
-    def mism_fun(self, m1, m2):
-        return m1 + m2
 
 
     def __read_reads(self):
@@ -107,60 +117,69 @@ class ImReP(object):
         full_cdr3 = []
         for record in self._fastq_handle:
             pSequences = nucleotide2protein2(str(record.seq))
-            #pSequences = ["CTRDIGITGTTCAEYFQHW"] 
             if pSequences:
                 for pSeq in pSequences:
-                    pos1 = pSeq.find("C")
-                    pos2 = pSeq.rfind("W")
-                    if pos1 != -1 and pos2 != -1 and pos2 - pos1 < 5:
-                        continue
-                    vtypes = set()
-                    jtypes = set()
-                    if pos1 != -1:
-                        f, s = pSeq[:pos1], pSeq[pos1 + 1:]
-                        for v, vv, v_t in self.vis:
-                            minlen1 = min(len(f), len(v))
-                            minlen2 = min(len(s), len(vv))
-                            if minlen1 > 0:
-                                mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(v[-minlen1:]))
-                            else:
-                                mismatch1 = 0
-                            if minlen2 > 0:
-                                mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
-                            else:
-                                mismatch2 = 0
-                            if (minlen1 == 0 and mismatch2 == 0) or (minlen1 > 0 and mismatch1 <= 1 and minlen2 > 0 and mismatch2 <= 2):
-                                vtypes.add(v_t)
-                    if pos2 != -1:
-                        f, s = pSeq[:pos2], pSeq[pos2 + 1:]
-                        for j, jj, j_t in self.jays:
-                            minlen1 = min(len(f), len(j))
-                            minlen2 = min(len(s), len(jj))
-                            if minlen2 > 0:
-                                mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(jj[:minlen2]))
-                            else:
-                                mismatch2 = 0
-                            if minlen1 > 0:
-                                mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
-                            else:
-                                mismatch1 = 0
-                            if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 > 0 and mismatch2 <= 1 and minlen1 > 0 and mismatch1 <= 0):
-                                jtypes.add(j_t)
-                    if vtypes and jtypes:
-                        cdr3 = pSeq[pos1: pos2 + 1]
-                        if cdr3 not in self.pSeq_read_map:
-                            full_cdr3.append(cdr3)
-                            self.pSeq_read_map[cdr3] = {"v": vtypes, "j": jtypes}
-                    elif vtypes:
-                        vi_partial = pSeq[pos1:]
-                        if vi_partial not in self.pSeq_read_map:
-                            self.just_v.append(vi_partial)
-                            self.pSeq_read_map[vi_partial] = {"v": vtypes}
-                    elif jtypes:
-                        jay_partial = pSeq[:pos2 + 1]
-                        if jay_partial not in self.pSeq_read_map:
-                            self.just_j.append(jay_partial)
-                            self.pSeq_read_map[jay_partial] = {"j": jtypes}
+                    found = False
+                    for chain_name in ["IGH", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG"]:
+                        letter = "F"
+                        if chain_name == "IGH":
+                            letter = "W"
+                        pos1 = pSeq.find("C")
+                        pos2 = pSeq.rfind(letter)
+                        if pos1 != -1 and pos2 != -1 and pos2 - pos1 < 5:
+                            continue
+                        vtypes = set()
+                        jtypes = set()
+                        if pos1 != -1:
+                            f, s = pSeq[:pos1], pSeq[pos1 + 1:]
+                            for v, vv, v_t in self.vis[chain_name]:
+                                minlen1 = min(len(f), len(v))
+                                minlen2 = min(len(s), len(vv))
+                                if minlen1 > 0:
+                                    mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(v[-minlen1:]))
+                                else:
+                                    mismatch1 = 0
+                                if minlen2 > 0:
+                                    mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
+                                else:
+                                    mismatch2 = 0
+                                if (minlen1 == 0 and mismatch2 == 0) or (minlen1 > 0 and mismatch1 <= 1 and minlen2 > 0 and mismatch2 <= 2):
+                                    vtypes.add(v_t)
+                        if pos2 != -1:
+                            f, s = pSeq[:pos2], pSeq[pos2 + 1:]
+                            for j, jj, j_t in self.jays[chain_name]:
+                                minlen1 = min(len(f), len(j))
+                                minlen2 = min(len(s), len(jj))
+                                if minlen2 > 0:
+                                    mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(jj[:minlen2]))
+                                else:
+                                    mismatch2 = 0
+                                if minlen1 > 0:
+                                    mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
+                                else:
+                                    mismatch1 = 0
+                                if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 > 0 and mismatch2 <= 1 and minlen1 > 0 and mismatch1 <= 0):
+                                    jtypes.add(j_t)
+                        if vtypes and jtypes:
+                            found = True
+                            cdr3 = pSeq[pos1: pos2 + 1]
+                            if cdr3 not in self.pSeq_read_map:
+                                full_cdr3.append(cdr3)
+                                self.pSeq_read_map[cdr3] = {"v": vtypes, "j": jtypes, "chain_type": chain_name}
+                        elif vtypes:
+                            found = True
+                            vi_partial = pSeq[pos1:]
+                            if vi_partial not in self.pSeq_read_map:
+                                self.just_v.append(vi_partial)
+                                self.pSeq_read_map[vi_partial] = {"v": vtypes, "chain_type": chain_name}
+                        elif jtypes:
+                            found = True
+                            jay_partial = pSeq[:pos2 + 1]
+                            if jay_partial not in self.pSeq_read_map:
+                                self.just_j.append(jay_partial)
+                                self.pSeq_read_map[jay_partial] = {"j": jtypes, "chain_type": chain_name}
+                        if found == True:
+                            break
         return full_cdr3
 
 
@@ -187,15 +206,16 @@ class ImReP(object):
             overlap, index, terminal = stree.search_stree(j)
             if terminal and len(j[:overlap]) >= self.__settings.overlapLen:
                 overlapping_v = itree.search(index)
-                newly_born_cdr3 = list(overlapping_v)[0].data + j[overlap:]
-                countV = just_v[list(overlapping_v)[0].data]
-                countJ = just_j[j]
-                countVJ = min(countV, countJ)
-                for x in range(countVJ):
-                    handshakes.append(newly_born_cdr3)
-                #if newly_born_cdr3 not in self.pSeq_read_map:
-                self.pSeq_read_map[newly_born_cdr3] = {"v": self.pSeq_read_map[list(overlapping_v)[0].data]["v"],
-                                                      "j": self.pSeq_read_map[j]["j"]}
+                if self.pSeq_read_map[list(overlapping_v)[0].data]["chain_type"] == self.pSeq_read_map[j]["chain_type"]:
+                    newly_born_cdr3 = list(overlapping_v)[0].data + j[overlap:]
+                    countV = just_v[list(overlapping_v)[0].data]
+                    countJ = just_j[j]
+                    countVJ = min(countV, countJ)
+                    for x in range(countVJ):
+                        handshakes.append(newly_born_cdr3)
+                    #if newly_born_cdr3 not in self.pSeq_read_map:
+                    self.pSeq_read_map[newly_born_cdr3] = {"v": self.pSeq_read_map[list(overlapping_v)[0].data]["v"],
+                                                           "j": self.pSeq_read_map[j]["j"]}
         return handshakes
 
 
