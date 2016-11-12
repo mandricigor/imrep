@@ -20,8 +20,8 @@ gencode = {
       'GGA':'G', 'GGC':'G', 'GGG':'G', 'GGT':'G',
       'TCA':'S', 'TCC':'S', 'TCG':'S', 'TCT':'S',
       'TTC':'F', 'TTT':'F', 'TTA':'L', 'TTG':'L',
-      'TAC':'Y', 'TAT':'Y', 'TAA':'_', 'TAG':'_',
-      'TGC':'C', 'TGT':'C', 'TGA':'_', 'TGG':'W'}
+      'TAC':'Y', 'TAT':'Y', 'TAA':'*', 'TAG':'*',
+      'TGC':'C', 'TGT':'C', 'TGA':'*', 'TGG':'W'}
 
 
 basepairs = {'A':'T', 'C':'G', 'G':'C', 'T':'A'}
@@ -45,8 +45,8 @@ def nucleotide2protein2(inString):
     framesTemp.append(translate_frameshifted(inString[1:]))  # second frame
     framesTemp.append(translate_frameshifted(inString[2:]))  # third frame
     framesTemp.append(translate_frameshifted(reverse_complement(inString)))  # negative first frame
-    framesTemp.append(translate_frameshifted(reverse_complement(inString[:len(beans) - 1])))  # negative second frame
-    framesTemp.append(translate_frameshifted(reverse_complement(inString[:len(beans) - 2])))  # negative third frame
+    framesTemp.append(translate_frameshifted(reverse_complement(inString)[1:]))  # negative second frame
+    framesTemp.append(translate_frameshifted(reverse_complement(inString)[2:]))  # negative third frame
 
     for f in framesTemp:
         if 1 == 1: #if "_" not in f:
@@ -70,4 +70,18 @@ def getGeneType(geneName):
     if "-" in geneType:
         geneType = geneType.split("-")[0]
     return geneType
+
+
+
+def getGeneType2(geneName):
+    """
+    Hopefully, it is safe
+    """
+    geneType = geneName.split("|")[1].split("*")[0]
+    if "-" in geneType:
+        geneType = geneType.split("-")[0]
+    return geneType[:4]
+
+
+
 
