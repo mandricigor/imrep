@@ -1,9 +1,16 @@
 
 
+import sys
 import argparse
 import os
-import sys
 from collections import Counter
+import gzip
+
+try:
+    from StringIO import StringIO # Python 2
+except ImportError:
+    from io import StringIO # Python 3
+
 
 from Bio import SeqIO
 from intervaltree import IntervalTree
@@ -13,6 +20,10 @@ from search import IgorSuffixTree
 from cast import Cast
 from utils import *
 
+
+
+
+cd = os.path.dirname(os.path.realpath(__file__))
 
 
 class Settings(object):
@@ -34,140 +45,271 @@ class ImReP(object):
         self._fastq_handle = None
 
         self.vi_pieces = {}
-        self.viset = set()
-        self.anchor_v = {}
-        self.v_tip = {}
-
         self.d_seqs = {}
-
-        self.jayset = set()
         self.jay_pieces = {}
-        self.anchor_j = {}
-        self.j_tip = {}
-
-        self.pSeq_map = {}
-        self.read_vi_map = {}
-        self.read_jay_map = {}
-
+        self.pSeq_read_map = {}
         self.just_v = []
         self.just_j = []
-
+        self.hashV = {}
+        self.hashJ = {}
+        self.v_chain_type = {}
+        self.j_chain_type = {}
         self.__populate_v()
         self.__populate_d()
         self.__populate_j()
         self.__read_reads()
 
 
+    def kmers(self, string, k):
+        kmrs = []
+        for i in range(len(string) - k + 1):
+            kmrs.append(string[i: i + k])
+        return kmrs
+
+
+
     def __populate_v(self):
-        for record in SeqIO.parse("db/IGHV.faa", "fasta"):
-            if "partial in 3'" not in record.description:
-                posC = record.seq.tostring().rfind("C")
-                if posC != -1:
-                    anchor = record.seq.tostring()[posC:]
-                    if len(anchor) <= 4:
-                        self.viset.add(anchor)
-                        seq = record.seq.tostring()
-                        cut = 0
-                        if len(seq) > 34:
-                            cut = len(seq) - 34
-                        self.vi_pieces[record.id] = seq[cut:]
-                        if anchor not in self.anchor_v:
-                            self.anchor_v[anchor] = []
-                        self.anchor_v[anchor].append(seq)
-                        self.v_tip[seq] = record.id
+        global cd
+        chains_v = map(lambda x: cd + "/db/%sV.faa" % x, self.__settings.chains)
+        for ch_v_file in chains_v:
+            for record in SeqIO.parse(ch_v_file, "fasta"):
+                if "partial in 3'" not in record.description:
+                    Vend = record.seq.tostring()[-20:]
+                    kmrs = self.kmers(Vend, 3)
+                    for k in kmrs:
+                        if k not in self.hashV:
+                            self.hashV[k] = set()
+                        self.hashV[k].add(record.id)
+                    self.v_chain_type[record.id] = getGeneType2(record.id)
+                    posC = Vend.rfind("C")
+                    if posC != -1:
+                        anchor = Vend[:posC]
+                        rest = Vend[posC + 1:]
+                        self.vi_pieces[record.id] = (anchor, rest)
 
     def __populate_d(self):
-        for record in SeqIO.parse("db/IGHD.faa", "fasta"):
-            self.d_seqs[record.id] = record.seq.tostring()
+        global cd
+        for chain in self.__settings.chains:
+            if chain in ["IGH", "TRB", "TRD"]:
+                for record in SeqIO.parse(cd + "/db/%sD.faa" % chain, "fasta"):
+                    if chain not in self.d_seqs:
+                        self.d_seqs[chain] = {}
+                    self.d_seqs[chain][record.id] = record.seq.tostring()
+
 
     def __populate_j(self):
-        for record in SeqIO.parse("db/IGHJ.faa", "fasta"):
-            posW = record.seq.tostring().rfind("W")
-            if posW != -1:
-                anchor = record.seq.tostring()[:posW+1]
-                print anchor
-                self.jayset.add(anchor)
-                seq = record.seq.tostring()
-                cut = 0
-                if len(seq) > 34:
-                    cut = len(seq) - 34
-                self.jay_pieces[record.id] = seq[cut:]
-                if anchor not in self.anchor_j:
-                    self.anchor_j[anchor] = []
-                self.anchor_j[anchor].append(seq)
-                self.j_tip[seq] = record.id
+        global cd
+        chains_j = map(lambda x: cd + "/db/%sJ.faa" % x, self.__settings.chains)
+        for ch_j_file in chains_j:
+            for record in SeqIO.parse(ch_j_file, "fasta"):
+                beginJ = record.seq.tostring()[:20]
+                kmrs = self.kmers(beginJ, 3)
+                for k in kmrs:
+                    if k not in self.hashJ:
+                        self.hashJ[k] = set()
+                    self.hashJ[k].add(record.id)
+                self.j_chain_type[record.id] = getGeneType2(record.id)
+                letter = "F"
+                if "IGHJ" in ch_j_file:
+                    letter = "W"
+                posW = beginJ.find(letter)
+                if posW != -1:
+                    anchor = beginJ[:posW]
+                    rest = beginJ[posW + 1:]
+                    self.jay_pieces[record.id] = (anchor, rest)
+
 
 
     def __read_reads(self):
         fastqfile = self.__settings.fastqfile
-        self._fastq_handle = SeqIO.parse(fastqfile, "fasta")
+        if fastqfile.endswith(".gz"):
+            with gzip.open(fastqfile, 'rb') as f:
+                file_content = f.read()
+            self._fastq_handle = SeqIO.parse(StringIO(file_content), "fasta")
+        else:
+            self._fastq_handle = SeqIO.parse(fastqfile, "fasta")
 
 
     def __full_cdr3(self):
         if not self._fastq_handle:
             return []
+        vkeys = set(self.hashV.keys())
+        jkeys = set(self.hashJ.keys())
         full_cdr3 = []
         for record in self._fastq_handle:
             pSequences = nucleotide2protein2(str(record.seq))
             if pSequences:
-                #self.pSeq_map[record.id] = pSequences
-                #vi_list = []
-                #jay_list = []
                 for pSeq in pSequences:
-                    v_anchors = {}
-                    j_anchors = {}
-                    for v in self.viset:
-                        if pSeq.rfind(v) != -1:
-                            v_types = []
-                            pos = pSeq.rfind(v)
-                            #read_part_v = pSeq[pos:]
-                            for s in self.anchor_v[v]:
-                                if len(pSeq[:pos + len(v)]) > 0 and jellyfish.levenshtein_distance(unicode(pSeq[:pos + len(v)]), unicode(s[-len(pSeq[:pos + len(v)]):])) <= 0:
-                                    tip = self.v_tip[s]
-                                    v_types.append(tip)
-                            if v_types:
-                                v_anchors[v] = v_types
-                    for j in self.jayset:
-                        if pSeq.find(j) != -1:
-                            j_types = []
-                            pos = pSeq.find(j)
-                            read_part_j = pSeq[:pos + len(j)]
-                            for s in self.anchor_j[j]:
-                                if len(pSeq[pos:]) > 0 and jellyfish.levenshtein_distance(unicode(pSeq[pos:]), unicode(s[:len(pSeq[pos:])])) <= 0:
-                                    tip = self.j_tip[s]
-                                    j_types.append(tip)
-                            if j_types:
-                                j_anchors[j] = j_types
-                    #print v_anchors, j_anchors
-                    if v_anchors and j_anchors:
-                        for v, v_t in v_anchors.items():
-                            for j, j_t in j_anchors.items():
-                                vpos, jpos = pSeq.rfind(v), pSeq.find(j) + len(j)
-                                cdr3_region = pSeq[vpos: jpos]
-                                full_cdr3.append(cdr3_region)
-                                if cdr3_region not in self.pSeq_map:
-                                    vs = set(map(getGeneType, v_t))
-                                    js = set(map(getGeneType, j_t))
-                                    self.pSeq_map[cdr3_region] = {"v": vs, "j": js}
-                    elif v_anchors:
-                        for v, v_t in v_anchors.items():
-                            vpos = pSeq.rfind(v)
-                            partial_in_v = pSeq[vpos:]
-                            if len(partial_in_v) > 5:
-                                self.just_v.append(partial_in_v)
-                                if partial_in_v not in self.pSeq_map:
-                                    vs = set(map(getGeneType, v_t))
-                                    self.pSeq_map[partial_in_v] = {"v": vs}
-                    elif j_anchors:
-                        for j, j_t in j_anchors.items():
-                            jpos = pSeq.find(j)
-                            partial_in_j = pSeq[:jpos + len(j)]
-                            if len(partial_in_j) > 5:
-                                self.just_j.append(partial_in_j)
-                                if partial_in_j not in self.pSeq_map:
-                                    js = set(map(getGeneType, j_t))
-                                    self.pSeq_map[partial_in_j] = {"j": js}
+                    pos1 = pSeq.find("C")
+                    pos2 = [pSeq.rfind("F"), pSeq.rfind("W")]
+                    vtypes = {}
+                    jtypes = {}
+                    if pos1 != -1:
+                        kmrs1 = self.kmers(pSeq[:pos1 + 5], 3)
+                        interV = set(kmrs1) & vkeys
+                        vlist = []
+                        for v in interV:
+                            vlist.extend(list(self.hashV[v]))
+                        if vlist:
+                            vc = [x for x, y in Counter(vlist).items()]
+                        else:
+                            vc = []
+                        v_cl = {}
+                        for v in vc:
+                            if self.v_chain_type[v] not in v_cl:
+                                v_cl[self.v_chain_type[v]] = []
+                            v_cl[self.v_chain_type[v]].append(v)
+                        f, s = pSeq[:pos1], pSeq[pos1 + 1:]
+                        for v1, v2 in v_cl.items():
+                            for v3 in v2:
+                                if v3 not in self.vi_pieces:
+                                    continue
+                                v, vv = self.vi_pieces[v3]
+                                minlen1 = min(len(f), len(v))
+                                minlen2 = min(len(s), len(vv))
+                                if minlen1 > 0:
+                                    mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(v[-minlen1:]))
+                                else:
+                                    mismatch1 = 0
+                                if minlen2 > 0:
+                                    mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
+                                else:
+                                    mismatch2 = 0
+                                if (minlen1 == 0 and mismatch2 <= 1) or (minlen1 > 3 and mismatch1 <= 1 and minlen2 >= 2 and mismatch2 <= 2):
+                                    vtypes[v3] = mismatch1 + mismatch2
+                    if pos2 != [-1, -1]:
+                        if pos2[0] != -1:
+                            if pos2[1] > 10:
+                                offset = pos2[1] - 10
+                            else:
+                                offset = 0
+                            kmrs2 = self.kmers(pSeq[offset:], 3)
+                            interJ = set(kmrs2) & jkeys
+                            jlist = []
+                            for j in interJ:
+                                jlist.extend(list(self.hashJ[j]))
+                            if jlist:
+                                jc = [x for x, y in Counter(jlist).items()]
+                            else:
+                                jc = []
+                            j_cl = {}
+                            for j in jc:
+                                if self.j_chain_type[j] != "IGHJ" and self.j_chain_type[j] not in j_cl:
+                                    j_cl[self.j_chain_type[j]] = []
+                                if self.j_chain_type[j] != "IGHJ":
+                                    j_cl[self.j_chain_type[j]].append(j)
+                            f, s = pSeq[:pos2[0]], pSeq[pos2[0] + 1:]
+                            for j1, j2 in j_cl.items():
+                                for j3 in j2:
+                                    if j3 not in self.jay_pieces:
+                                        continue
+                                    j, jj = self.jay_pieces[j3]
+                                    minlen1 = min(len(f), len(j))
+                                    minlen2 = min(len(s), len(jj))
+                                    if minlen2 > 0:
+                                        mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(jj[:minlen2]))
+                                    else:
+                                        mismatch2 = 0
+                                    if minlen1 > 0:
+                                        mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
+                                    else:
+                                        mismatch1 = 0
+                                    if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 > 3 and mismatch2 <= 1 and minlen1 >= 2 and mismatch1 <= 2):
+                                        jtypes[j3] = mismatch1 + mismatch2
+                        if pos2[1] != -1:
+                            if pos2[1] > 10:
+                                offset = pos2[1] - 10
+                            else:
+                                offset = 0
+                            kmrs2 = self.kmers(pSeq[offset:], 3)
+                            interJ = set(kmrs2) & jkeys
+                            jlist = []
+                            for j in interJ:
+                                jlist.extend(list(self.hashJ[j]))
+                            if jlist:
+                                jc = [x for x, y in Counter(jlist).items()]
+                            else:
+                                jc = []
+                            j_cl = {}
+                            for j in jc:
+                                if self.j_chain_type[j] == "IGHJ" and self.j_chain_type[j] not in j_cl:
+                                    j_cl[self.j_chain_type[j]] = []
+                                if self.j_chain_type[j] == "IGHJ":
+                                    j_cl[self.j_chain_type[j]].append(j)
+                            f, s = pSeq[:pos2[1]], pSeq[pos2[1] + 1:]
+                            for j1, j2 in j_cl.items():
+                                for j3 in j2:
+                                    if j3 not in self.jay_pieces:
+                                        continue
+                                    j, jj = self.jay_pieces[j3]
+                                    minlen1 = min(len(f), len(j))
+                                    minlen2 = min(len(s), len(jj))
+                                    if minlen2 > 0:
+                                        mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(jj[:minlen2]))
+                                    else:
+                                        mismatch2 = 0
+                                    if minlen1 > 0:
+                                        mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
+                                    else:
+                                        mismatch1 = 0
+                                    if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 > 3 and mismatch2 <= 1 and minlen1 >= 2 and mismatch1 <= 2):
+                                        jtypes[j3] = mismatch1 + mismatch2
+                    if vtypes or jtypes:
+                        vt = {}
+                        jt = {}
+                        for x in vtypes:
+                            chaint = self.v_chain_type[x]
+                            if chaint[:3] not in vt:
+                                vt[chaint[:3]] = []
+                            vt[chaint[:3]].append(x)
+                        for x in jtypes:
+                            chaint = self.j_chain_type[x]
+                            if chaint[:3] not in jt:
+                                jt[chaint[:3]] = []
+                            jt[chaint[:3]].append(x)
+                        common = set(vt.keys()) & set(jt.keys())
+                        if common:
+                            if "IGH" in common:
+                                full_cdr3.append(pSeq[pos1: pos2[1] + 1])
+                                cdr3 = pSeq[pos1: pos2[1] + 1]
+                            else:
+                                full_cdr3.append(pSeq[pos1: pos2[0] + 1])
+                                cdr3 = pSeq[pos1: pos2[0] + 1]
+                            if cdr3 not in self.pSeq_read_map or (cdr3 in self.pSeq_read_map and ("v" not in self.pSeq_read_map[cdr3].keys() or "j" not in self.pSeq_read_map[cdr3].keys())):
+                                v_t = []
+                                j_t = []
+                                chtype = {}
+                                for key, ch in vt.items():
+                                    if key in common:
+                                        v_t.extend(ch)
+                                        if key not in chtype:
+                                            chtype[key] = []
+                                        chtype[key].extend(ch)
+                                for key, ch in jt.items():
+                                    if key in common:
+                                        j_t.extend(ch)
+                                        if key not in chtype:
+                                            chtype[key] = []
+                                        chtype[key].extend(ch)
+                                self.pSeq_read_map[cdr3] = {"v": map(getGeneType, v_t), "j": map(getGeneType, j_t), "chain_type": chtype}
+                        elif vtypes and not jtypes:
+                            vi_partial = pSeq[pos1:]
+                            if vi_partial not in full_cdr3:
+                                self.just_v.append(vi_partial)
+                            if vi_partial not in self.pSeq_read_map and vi_partial not in full_cdr3:
+                                self.pSeq_read_map[vi_partial] = {"v": map(getGeneType, vtypes), "chain_type": vt}
+                        elif jtypes and not vtypes:
+                            if "IGH" in jt:
+                                jay_partial = pSeq[:pos2[1] + 1]
+                            else:
+                                jay_partial = pSeq[:pos2[0] + 1]
+                            if jay_partial not in full_cdr3:
+                                self.just_j.append(jay_partial)
+                            if jay_partial not in self.pSeq_read_map and jay_partial not in full_cdr3:
+                                self.pSeq_read_map[jay_partial] = {"j": map(getGeneType, jtypes), "chain_type": jt}
         return full_cdr3
+
+
 
     def __vj_handshakes(self):
         handshakes = []
@@ -189,24 +331,40 @@ class ImReP(object):
             overlap, index, terminal = stree.search_stree(j)
             if terminal and len(j[:overlap]) >= self.__settings.overlapLen:
                 overlapping_v = itree.search(index)
-                print j, list(overlapping_v)[0].data, "AAAAAAAAAAAAAAA"
-                newly_born_cdr3 = list(overlapping_v)[0].data + j[overlap:]
-                countV = just_v[list(overlapping_v)[0].data]
-                countJ = just_j[j]
-                countVJ = min(countV, countJ)
-                for x in range(countVJ):
-                    handshakes.append(newly_born_cdr3)
-                if newly_born_cdr3 not in self.pSeq_map:
-                    self.pSeq_map[newly_born_cdr3] = {"v": self.pSeq_map[list(overlapping_v)[0].data]["v"],
-                                                      "j": self.pSeq_map[j]["j"]}
+                common_chains = set(self.pSeq_read_map[list(overlapping_v)[0].data]["chain_type"].keys()) & set(self.pSeq_read_map[j]["chain_type"].keys())
+                if common_chains:
+                    v_t = []
+                    j_t = []
+                    chtype = {}
+                    for key, ch in self.pSeq_read_map[list(overlapping_v)[0].data]["chain_type"].items():
+                        if key in common_chains:
+                            v_t.extend(map(getGeneType, ch))
+                            if key not in chtype:
+                                chtype[key] = []
+                            chtype[key].extend(ch)
+                    for key, ch in self.pSeq_read_map[j]["chain_type"].items():
+                        if key in common_chains:
+                            j_t.extend(map(getGeneType, ch))
+                            if key not in chtype:
+                                chtype[key] = []
+                            chtype[key].extend(ch)
+                    newly_born_cdr3 = list(overlapping_v)[0].data + j[overlap:]
+                    countV = just_v[list(overlapping_v)[0].data]
+                    countJ = just_j[j]
+                    countVJ = min(countV, countJ)
+                    for x in range(countVJ):
+                        handshakes.append(newly_born_cdr3)
+                    self.pSeq_read_map[newly_born_cdr3] = {"v": v_t, "j": j_t, "chain_type": chtype}
         return handshakes
 
 
-    def __map_j(self, seq):
+    def __map_d(self, seq, chain_type):
         d_types = set()
-        for d_t, d_seq in self.d_seqs.items():
+        for d_t, d_seq in self.d_seqs[chain_type].items():
             if seq.find(d_seq) != -1:
                 d_types.add(getGeneType(d_t))
+        if not d_types:
+            return set(["NA"])
         return d_types
 
 
@@ -219,11 +377,15 @@ class ImReP(object):
         cast_clustering = Cast(clones)
         clustered_clones = cast_clustering.doCast(self.__settings.castThreshold)
         for clone in clustered_clones:
-            j_types = self.__map_j(clone[0])
+            chain_type = self.pSeq_read_map[clone[0]]["v"][0][:3]
+            j_types = None
+            if chain_type in ["IGH", "TRB", "TRD"]:
+                j_types = self.__map_d(clone[0], chain_type)
+            types = [",".join(set(self.pSeq_read_map[clone[0]]["v"]))]
             if j_types:
-                clone.extend([",".join(self.pSeq_map[clone[0]]["v"]),
-                              ",".join(j_types),
-                              ",".join(self.pSeq_map[clone[0]]["j"])])
+                types.append(",".join(j_types))
+            types.append(",".join(set(self.pSeq_read_map[clone[0]]["j"])))
+            clone.extend(types)
         return clustered_clones
 
 
@@ -239,7 +401,8 @@ if __name__ == "__main__":
     optional_arguments = ap.add_argument_group("Optional Inputs")
     optional_arguments.add_argument("-o", "--overlapLen", help="overlap length between v and j", type=int)
     optional_arguments.add_argument("--noOverlapStep", help="whether to execute overlap step with suffix trees", dest="noOverlapStep", action="store_true")
-    optional_arguments.add_argument("-c", "--castThreshold", help="threshold for CAST clustering algorithm", type=float)
+    optional_arguments.add_argument("-t", "--castThreshold", help="threshold for CAST clustering algorithm", type=float)
+    optional_arguments.add_argument("-c", "--chains", help="chains: comma separated values from IGH,IGK,IGL,TRA,TRB,TRD,TRG", type=str)
 
     args = ap.parse_args()
 
@@ -251,6 +414,7 @@ if __name__ == "__main__":
         'overlapLen': 10,
         'noOverlapStep': False,
         'castThreshold': 0.2,
+        'chains': ['IGH','IGK','IGL','TRA','TRB','TRD','TRG']
     }
 
     if args.overlapLen:
@@ -259,6 +423,8 @@ if __name__ == "__main__":
         set_dict["noOverlapStep"] = args.noOverlapStep
     if args.castThreshold:
         set_dict["castThreshold"] = args.castThreshold
+    if args.chains:
+        set_dict["chains"] = args.chains.split(",")
 
     settings = Settings(**set_dict)
 
