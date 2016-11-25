@@ -50,6 +50,9 @@ class ImReP(object):
         self.pSeq_read_map = {}
         self.just_v = []
         self.just_j = []
+        self.just_v_dict = {}
+        self.just_j_dict = {}
+        self.cdr3_dict = {}
         self.hashV = {}
         self.hashJ = {}
         self.v_chain_type = {}
@@ -275,6 +278,9 @@ class ImReP(object):
                             else:
                                 full_cdr3.append(pSeq[pos1: pos2[0] + 1])
                                 cdr3 = pSeq[pos1: pos2[0] + 1]
+                            if cdr3 not in self.cdr3_dict:
+                                self.cdr3_dict[cdr3] = []
+                            self.cdr3_dict[cdr3].append(record.id)
                             if cdr3 not in self.pSeq_read_map or (cdr3 in self.pSeq_read_map and ("v" not in self.pSeq_read_map[cdr3].keys() or "j" not in self.pSeq_read_map[cdr3].keys())):
                                 v_t = []
                                 j_t = []
@@ -296,6 +302,9 @@ class ImReP(object):
                             vi_partial = pSeq[pos1:]
                             if vi_partial not in full_cdr3:
                                 self.just_v.append(vi_partial)
+                                if vi_partial not in self.just_v_dict:
+                                    self.just_v_dict[vi_partial] = []
+                                self.just_v_dict[vi_partial].append(record.id)
                             if vi_partial not in self.pSeq_read_map and vi_partial not in full_cdr3:
                                 self.pSeq_read_map[vi_partial] = {"v": map(getGeneType, vtypes), "chain_type": vt}
                         elif jtypes and not vtypes:
@@ -305,6 +314,9 @@ class ImReP(object):
                                 jay_partial = pSeq[:pos2[0] + 1]
                             if jay_partial not in full_cdr3:
                                 self.just_j.append(jay_partial)
+                                if jay_partial not in self.just_j_dict:
+                                    self.just_j_dict[jay_partial] = []
+                                self.just_j_dict[jay_partial].append(record.id)
                             if jay_partial not in self.pSeq_read_map and jay_partial not in full_cdr3:
                                 self.pSeq_read_map[jay_partial] = {"j": map(getGeneType, jtypes), "chain_type": jt}
         return full_cdr3
@@ -349,6 +361,16 @@ class ImReP(object):
                                 chtype[key] = []
                             chtype[key].extend(ch)
                     newly_born_cdr3 = list(overlapping_v)[0].data + j[overlap:]
+                    if newly_born_cdr3 not in self.cdr3_dict:
+                        self.cdr3_dict[newly_born_cdr3] = []
+                    if list(overlapping_v)[0].data in self.just_v_dict:
+                        self.cdr3_dict[newly_born_cdr3].extend(self.just_v_dict[list(overlapping_v)[0].data])
+                    if j in self.just_j_dict:
+                        self.cdr3_dict[newly_born_cdr3].extend(self.just_j_dict[j])
+                    if list(overlapping_v)[0].data in self.just_v_dict:
+                        del self.just_v_dict[list(overlapping_v)[0].data]
+                    if j in self.just_j_dict:
+                        del self.just_j_dict[j]
                     countV = just_v[list(overlapping_v)[0].data]
                     countJ = just_j[j]
                     countVJ = min(countV, countJ)
@@ -376,15 +398,21 @@ class ImReP(object):
         clones = Counter(clones)
         cast_clustering = Cast(clones)
         clustered_clones = cast_clustering.doCast(self.__settings.castThreshold)
+        self.clone_dict = {}
         for clone in clustered_clones:
+            self.clone_dict[clone[0]] = clone[2]
+            del clone[2]
+            del clone[1] # remove counts for now
             chain_type = self.pSeq_read_map[clone[0]]["v"][0][:3]
             j_types = None
             if chain_type in ["IGH", "TRB", "TRD"]:
                 j_types = self.__map_d(clone[0], chain_type)
-            types = [",".join(set(self.pSeq_read_map[clone[0]]["v"]))]
+            types = [",".join(list(set(self.pSeq_read_map[clone[0]]["v"]))[:3])]
             if j_types:
                 types.append(",".join(j_types))
-            types.append(",".join(set(self.pSeq_read_map[clone[0]]["j"])))
+            else:
+                types.append("NA")
+            types.append(",".join(list(set(self.pSeq_read_map[clone[0]]["j"]))[:3]))
             clone.extend(types)
         return clustered_clones
 
@@ -401,6 +429,7 @@ if __name__ == "__main__":
     optional_arguments = ap.add_argument_group("Optional Inputs")
     optional_arguments.add_argument("-o", "--overlapLen", help="overlap length between v and j", type=int)
     optional_arguments.add_argument("--noOverlapStep", help="whether to execute overlap step with suffix trees", dest="noOverlapStep", action="store_true")
+    optional_arguments.add_argument("--extendedOutput", help="extended output: write information read by read", dest="extendedOutput", action="store_true")
     optional_arguments.add_argument("-t", "--castThreshold", help="threshold for CAST clustering algorithm", type=float)
     optional_arguments.add_argument("-c", "--chains", help="chains: comma separated values from IGH,IGK,IGL,TRA,TRB,TRD,TRG", type=str)
 
@@ -413,6 +442,7 @@ if __name__ == "__main__":
         'fastqfile': fastqfile,
         'overlapLen': 10,
         'noOverlapStep': False,
+        'extendedOutput': False,
         'castThreshold': 0.2,
         'chains': ['IGH','IGK','IGL','TRA','TRB','TRD','TRG']
     }
@@ -421,6 +451,8 @@ if __name__ == "__main__":
         set_dict["overlapLen"] = args.overlapLen
     if args.noOverlapStep is not None:
         set_dict["noOverlapStep"] = args.noOverlapStep
+    if args.extendedOutput is not None:
+        set_dict["extendedOutput"] = args.extendedOutput
     if args.castThreshold:
         set_dict["castThreshold"] = args.castThreshold
     if args.chains:
@@ -431,7 +463,27 @@ if __name__ == "__main__":
     print "Starting ImReP-0.1"
     imrep = ImReP(settings)
     clones = imrep.doComputeClones()
-    dumpClones(clones, outFile)
+    final_clones = []
+    if set_dict["extendedOutput"]:
+        with open("full_cdr3.txt", "w") as f:
+            for cl in clones:
+                for clon in imrep.clone_dict[cl[0]]:
+                    for read in imrep.cdr3_dict[clon]:
+                        f.write("%s\t%s\t%s\t%s\t%s\n" % (read, cl[0], cl[1], cl[2], cl[3]))
+                        final_clones.append(cl[0] + "\t%s\t" + "%s\t%s\t%s\n" % (cl[1], cl[2], cl[3]))
+        with open("partial_cdr3.txt", "w") as f:
+            for x, y in imrep.just_v_dict.items():
+                for read in y:
+                    v = ",".join(list(set(imrep.pSeq_read_map[x].get("v", ["NA"])))[:3])
+                    j = ",".join(list(set(imrep.pSeq_read_map[x].get("j", ["NA"])))[:3])
+                    f.write("%s\t%s\t%s\t%s\t%s\n" % (read, x, v, "NA", j))
+    final_clones = Counter(final_clones)
+    print "%s partial-V CDR3 found" % len(imrep.just_v_dict)
+    print "%s partial-J CDR3 found" % len(imrep.just_j_dict)
+    print "%s full CDR3 found" % len(final_clones)
+    clones = []
+    for x, y in final_clones.items():
+        clones.append(x % y)
+    dumpClones2(clones, outFile)
     print "Done. Bye-bye"
-
 

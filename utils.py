@@ -61,6 +61,12 @@ def dumpClones(clones, outFile):
             f.write(("\t".join(["%s"] * len(clone)) + "\n") % tuple(clone))
 
 
+def dumpClones2(clones, outFile):
+    with open(outFile, "w") as f:
+        for clone in clones:
+            f.write(clone)
+
+
 
 def getGeneType(geneName):
     """

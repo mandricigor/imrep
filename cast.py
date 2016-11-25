@@ -96,7 +96,8 @@ class Cast(object):
         for part in partition:
             representative = max(part, key=lambda z: z[1])[0]
             count_cluster = sum([x[1] for x in part])
-            cdr3s.append([representative, count_cluster])
+            members = map(lambda x: x[0], part)
+            cdr3s.append([representative, count_cluster, members])
         return cdr3s
 
 
