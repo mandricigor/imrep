@@ -73,7 +73,7 @@ class ImReP(object):
 
     def __populate_v(self):
         global cd
-        chains_v = map(lambda x: cd + "/db/%sV.faa" % x, self.__settings.chains)
+        chains_v = map(lambda x: cd + "/db/%s/%sV.faa" % (self.__settings.species, x), self.__settings.chains)
         for ch_v_file in chains_v:
             for record in SeqIO.parse(ch_v_file, "fasta"):
                 if "partial in 3'" not in record.description:
@@ -94,7 +94,7 @@ class ImReP(object):
         global cd
         for chain in self.__settings.chains:
             if chain in ["IGH", "TRB", "TRD"]:
-                for record in SeqIO.parse(cd + "/db/%sD.faa" % chain, "fasta"):
+                for record in SeqIO.parse(cd + "/db/%s/%sD.faa" % (self.__settings.species, chain), "fasta"):
                     if chain not in self.d_seqs:
                         self.d_seqs[chain] = {}
                     self.d_seqs[chain][record.id] = record.seq.tostring()
@@ -102,7 +102,7 @@ class ImReP(object):
 
     def __populate_j(self):
         global cd
-        chains_j = map(lambda x: cd + "/db/%sJ.faa" % x, self.__settings.chains)
+        chains_j = map(lambda x: cd + "/db/%s/%sJ.faa" % (self.__settings.species, x), self.__settings.chains)
         for ch_j_file in chains_j:
             for record in SeqIO.parse(ch_j_file, "fasta"):
                 beginJ = record.seq.tostring()[:20]
@@ -125,12 +125,18 @@ class ImReP(object):
 
     def __read_reads(self):
         fastqfile = self.__settings.fastqfile
+        if fastqfile.endswith(".fa") or fastqfile.endswith(".fasta") or fastqfile.endswith(".fna"):
+            formatFile = "fasta"
+        elif fastqfile.endswith(".fq") or fastqfile.endswith(".fastq"):
+            formatFile = "fastq"
+        else:
+            raise Exception("Unrecognized format of input file. Please, provide either .fasta or .fastq file")
         if fastqfile.endswith(".gz"):
             with gzip.open(fastqfile, 'rb') as f:
                 file_content = f.read()
-            self._fastq_handle = SeqIO.parse(StringIO(file_content), "fasta")
+            self._fastq_handle = SeqIO.parse(StringIO(file_content), formatFile)
         else:
-            self._fastq_handle = SeqIO.parse(fastqfile, "fasta")
+            self._fastq_handle = SeqIO.parse(fastqfile, formatFile)
 
 
     def __full_cdr3(self):
@@ -423,10 +429,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser("python2 imrep.py")
 
     necessary_arguments = ap.add_argument_group("Necessary Inputs")
-    necessary_arguments.add_argument("reads_fastq", help="unmapped reads in .fastq format")
+    necessary_arguments.add_argument("reads_fastq", help="unmapped reads in .fasta or .fastq format")
     necessary_arguments.add_argument("output_clones", help="output files with CDR3 clonotypes")
 
     optional_arguments = ap.add_argument_group("Optional Inputs")
+    optional_arguments.add_argument("-s", "--species", help="species (human or mouse, default human)", type=str, dest="species")
     optional_arguments.add_argument("-o", "--overlapLen", help="overlap length between v and j", type=int)
     optional_arguments.add_argument("--noOverlapStep", help="whether to execute overlap step with suffix trees", dest="noOverlapStep", action="store_true")
     optional_arguments.add_argument("--extendedOutput", help="extended output: write information read by read", dest="extendedOutput", action="store_true")
@@ -439,6 +446,7 @@ if __name__ == "__main__":
     outFile = args.output_clones
 
     set_dict = {
+        'species': "human",
         'fastqfile': fastqfile,
         'overlapLen': 10,
         'noOverlapStep': False,
@@ -447,6 +455,11 @@ if __name__ == "__main__":
         'chains': ['IGH','IGK','IGL','TRA','TRB','TRD','TRG']
     }
 
+    if args.species:
+        if args.species in ["human", "mouse"]:
+            set_dict["species"] = args.species
+        else:
+            raise Exception("Species must be either human or mouse")
     if args.overlapLen:
         set_dict["overlapLen"] = args.overlapLen
     if args.noOverlapStep is not None:
