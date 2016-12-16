@@ -434,8 +434,8 @@ if __name__ == "__main__":
 
     optional_arguments = ap.add_argument_group("Optional Inputs")
     optional_arguments.add_argument("-s", "--species", help="species (human or mouse, default human)", type=str, dest="species")
-    optional_arguments.add_argument("-o", "--overlapLen", help="overlap length between v and j", type=int)
-    optional_arguments.add_argument("--noOverlapStep", help="whether to execute overlap step with suffix trees", dest="noOverlapStep", action="store_true")
+    optional_arguments.add_argument("-o", "--overlapLen", help="the minimal length to consider between reads overlapping with a V gene and reads overlapping with a J gene. Default value is 10 amino acids.", type=int)
+    optional_arguments.add_argument("--noOverlapStep", help="a binary flag used in case if the user does not want to run the second stage of the ImReP assembly.", dest="noOverlapStep", action="store_true")
     optional_arguments.add_argument("--extendedOutput", help="extended output: write information read by read", dest="extendedOutput", action="store_true")
     optional_arguments.add_argument("-t", "--castThreshold", help="threshold for CAST clustering algorithm", type=float)
     optional_arguments.add_argument("-c", "--chains", help="chains: comma separated values from IGH,IGK,IGL,TRA,TRB,TRD,TRG", type=str)
