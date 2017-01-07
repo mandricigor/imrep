@@ -128,14 +128,17 @@ class ImReP(object):
 
     def __read_reads(self):
         fastqfile = self.__settings.fastqfile
-        if fastqfile.endswith(".fa") or fastqfile.endswith(".fasta") or fastqfile.endswith(".fna") \
-            or fastqfile.endswith(".fa.gz") or fastqfile.endswith(".fasta.gz") or fastqfile.endswith(".fna.gz"):
-            formatFile = "fasta"
-        elif fastqfile.endswith(".fq") or fastqfile.endswith(".fastq") \
-            or fastqfile.endswith(".fq.gz") or fastqfile.endswith(".fastq.gz"):
+        formatFile = "fasta"
+        if self.__settings.isFastq:
             formatFile = "fastq"
-        else:
-            raise Exception("Unrecognized format of input file. Please, provide either .fasta or .fastq file")
+        #if fastqfile.endswith(".fa") or fastqfile.endswith(".fasta") or fastqfile.endswith(".fna") \
+        #    or fastqfile.endswith(".fa.gz") or fastqfile.endswith(".fasta.gz") or fastqfile.endswith(".fna.gz"):
+        #    formatFile = "fasta"
+        #elif fastqfile.endswith(".fq") or fastqfile.endswith(".fastq") \
+        #    or fastqfile.endswith(".fq.gz") or fastqfile.endswith(".fastq.gz"):
+        #    formatFile = "fastq"
+        #else:
+        #    raise Exception("Unrecognized format of input file. Please, provide either .fasta or .fastq file")
         if fastqfile.endswith(".gz"):
             with gzip.open(fastqfile, 'rb') as f:
                 file_content = f.read()
@@ -455,23 +458,26 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser("python2 imrep.py")
 
     necessary_arguments = ap.add_argument_group("Necessary Inputs")
-    necessary_arguments.add_argument("reads_fastq", help="unmapped reads in .fasta or .fastq format")
-    necessary_arguments.add_argument("output_clones", help="output files with CDR3 clonotypes")
+    necessary_arguments.add_argument("reads_file", help="unmapped reads in .fasta (default) or .fastq (if flag --fastq is set)  format")
+    necessary_arguments.add_argument("output_clones", help="output file with CDR3 clonotypes")
 
     optional_arguments = ap.add_argument_group("Optional Inputs")
+    optional_arguments.add_argument("--fastq", help="a binary flag used to indicate that the input file with unmapped reads is in fastq format", dest="isFastq", action="store_true")
     optional_arguments.add_argument("-s", "--species", help="species (human or mouse, default human)", type=str, dest="species")
     optional_arguments.add_argument("-o", "--overlapLen", help="the minimal length to consider between reads overlapping with a V gene and reads overlapping with a J gene. Default value is 10 amino acids.", type=int)
     optional_arguments.add_argument("--noOverlapStep", help="a binary flag used in case if the user does not want to run the second stage of the ImReP assembly.", dest="noOverlapStep", action="store_true")
     optional_arguments.add_argument("--extendedOutput", help="extended output: write information read by read", dest="extendedOutput", action="store_true")
-    optional_arguments.add_argument("-t", "--castThreshold", help="threshold for CAST clustering algorithm", type=float)
+    optional_arguments.add_argument("-t", "--castThreshold", help="the -t option has been added to control the stringency of CDR3 clustering. The value can be from 0.0 to 1.0. Note that thresholds near 1.0 are more liberal and result in more CDR3 to be reported. The default value is 0.2", type=float)
     optional_arguments.add_argument("-c", "--chains", help="chains: comma separated values from IGH,IGK,IGL,TRA,TRB,TRD,TRG", type=str)
 
     args = ap.parse_args()
 
-    fastqfile = args.reads_fastq
+    fastqfile = args.reads_file
+    isFastq = args.isFastq
     outFile = args.output_clones
 
     set_dict = {
+        'isFastq': False,
         'species': "human",
         'fastqfile': fastqfile,
         'overlapLen': 10,
@@ -490,6 +496,8 @@ if __name__ == "__main__":
         set_dict["overlapLen"] = args.overlapLen
     if args.noOverlapStep is not None:
         set_dict["noOverlapStep"] = args.noOverlapStep
+    if args.isFastq is not None:
+        set_dict["isFastq"] = args.isFastq
     if args.extendedOutput is not None:
         set_dict["extendedOutput"] = args.extendedOutput
     if args.castThreshold:
