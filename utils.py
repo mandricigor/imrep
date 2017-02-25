@@ -51,10 +51,11 @@ def nucleotide2protein2(inString):
     frs = [1, 2, 3, -1, -2, -3]
 
     for f, frame in zip(framesTemp, frs):
-        if 1 == 1: #if "_" not in f:
+        if "_" not in f and "*" not in f:
             processedRead=f.replace(' ','')
             frames.append((processedRead, frame))
     return frames
+
 
 
 def dumpClones(clones, outFile):
