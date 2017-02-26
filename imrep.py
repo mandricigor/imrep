@@ -580,6 +580,37 @@ if __name__ == "__main__":
                     if not di_j:
                         di_j = "NA"
                     f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (read, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
+            for x, y in imrep.just_j_dict.items():
+                for read in y:
+                    v = ",".join(list(set(imrep.pSeq_read_map[x].get("v", ["NA"])))[:3])
+                    j = ",".join(list(set(imrep.pSeq_read_map[x].get("j", ["NA"])))[:3])
+                    dinfo_v = imrep.debug_info[read].get("vscore", {})
+                    dinfo_j = imrep.debug_info[read].get("jscore", {})
+                    di_v = []
+                    di_j = []
+                    uniq_v, uniq_j = 0, 0
+                    for xx, yy in dinfo_v.items():
+                        if yy:
+                            for u in yy:
+                                geneName = u[0].split("|")[1]
+                                di_v.append(geneName + ":" + ":".join(map(str, u[1:])))
+                    for xx, yy in dinfo_j.items():
+                        if yy:
+                            for u in yy:
+                                geneName = u[0].split("|")[1]
+                                di_j.append(geneName + ":" + ":".join(map(str, u[1:])))
+                    if len(di_v) == 1:
+                        uniq_v = 1
+                    if len(di_j) == 1:
+                        uniq_j = 1
+                    uniq_vj = uniq_v & uniq_j
+                    di_v = ",".join(di_v)
+                    if not di_v:
+                        di_v = "NA"
+                    di_j = ",".join(di_j)
+                    if not di_j:
+                        di_j = "NA"
+                    f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (read, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
     else:
         for cl in clones:
             for clon in imrep.clone_dict[cl[0]]:
