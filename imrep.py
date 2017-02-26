@@ -151,7 +151,7 @@ class ImReP(object):
             with open(fastqfile) as file_check:
                 content = len(file_check.readlines())
         # sanity check
-        if content > 0 and len(list(self._fastq_handle)) == 0:
+        if content > 0 and not self._fastq_handle:
             if formatFile == "fasta":
                 raise Exception("Are you sure the file %s is a .fasta file?" % fastqfile)
             elif formatFile == "fastq":
@@ -214,7 +214,7 @@ class ImReP(object):
                                     mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
                                 else:
                                     mismatch2 = 0
-                                if (minlen1 == 0 and mismatch2 <= 1) or (minlen1 > 3 and mismatch1 <= 1 and minlen2 >= 2 and mismatch2 <= 2):
+                                if (minlen1 == 0 and mismatch2 <= 1) or (minlen1 >= self.__settings.minlen1 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
                                     vtypes[v3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
                     if pos2 != [-1, -1]:
                         if pos2[0] != -1:
@@ -254,7 +254,7 @@ class ImReP(object):
                                         mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
                                     else:
                                         mismatch1 = 0
-                                    if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 > 3 and mismatch2 <= 1 and minlen1 >= 2 and mismatch1 <= 2):
+                                    if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 >= self.__settings.minlen1 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
                                         jtypes[j3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
                         if pos2[1] != -1:
                             if pos2[1] > 10:
@@ -293,7 +293,7 @@ class ImReP(object):
                                         mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
                                     else:
                                         mismatch1 = 0
-                                    if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 > 3 and mismatch2 <= 1 and minlen1 >= 2 and mismatch1 <= 2):
+                                    if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 >= self.__settings.minlen1 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
                                         jtypes[j3] = (minlen1, mismatch1, minlen2, mismatch2)
                     if vtypes or jtypes:
                         vt = {}
@@ -482,6 +482,13 @@ if __name__ == "__main__":
     optional_arguments.add_argument("-t", "--castThreshold", help="the -t option has been added to control the stringency of CDR3 clustering. The value can be from 0.0 to 1.0. Note that thresholds near 1.0 are more liberal and result in more CDR3 to be reported. The default value is 0.2", type=float)
     optional_arguments.add_argument("-c", "--chains", help="chains: comma separated values from IGH,IGK,IGL,TRA,TRB,TRD,TRG", type=str)
 
+    advanced_arguments = ap.add_argument_group("Advanced Inputs")
+    advanced_arguments.add_argument("--minOverlap1", help="minimal overlap between the reads and A) the left part of V gene (before C amino acid) and B) the right part of J gene (after W for IGH and F for all other chains), default is 4", type=int)
+    advanced_arguments.add_argument("--minOverlap2", help="minimal overlap between the reads and A) the right part of V gene (after C amino acid) and B) the left part of J gene (before W for IGH and F for all other chains), default is 1", type=int)
+    advanced_arguments.add_argument("--misMatch1", help="maximal number of mismatches between the reads and A) the left part of V gene (before C amino acid) and B) the right part of J gene (after W for IGH and F for all other chains), default is 2", type=int)
+    advanced_arguments.add_argument("--misMatch2", help="maximal number of mismatches between the reads and A) the right part of V gene (after C amino acid) and B) the left part of J gene (before W for IGH and F for all other chains), default is 2", type=int)
+   
+
     args = ap.parse_args()
 
     fastqfile = args.reads_file
@@ -496,7 +503,11 @@ if __name__ == "__main__":
         'noOverlapStep': False,
         'extendedOutput': False,
         'castThreshold': 0.2,
-        'chains': ['IGH','IGK','IGL','TRA','TRB','TRD','TRG']
+        'chains': ['IGH','IGK','IGL','TRA','TRB','TRD','TRG'],
+        'minlen1': 4,
+        'minlen2': 1,
+        'mismatch1': 2,
+        'mismatch2': 2
     }
 
     if args.species:
@@ -516,6 +527,14 @@ if __name__ == "__main__":
         set_dict["castThreshold"] = args.castThreshold
     if args.chains:
         set_dict["chains"] = args.chains.split(",")
+    if args.minOverlap1:
+        set_dict["minlen1"] = args.minOverlap1
+    if args.minOverlap2:
+        set_dict["minlen2"] = args.minOverlap2
+    if args.misMatch1:
+        set_dict["mismatch1"] = args.misMatch1
+    if args.misMatch2:
+        set_dict["mismatch2"] = args.misMatch2
 
     settings = Settings(**set_dict)
 
