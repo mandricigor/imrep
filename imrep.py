@@ -145,9 +145,19 @@ class ImReP(object):
             with gzip.open(fastqfile, 'rb') as f:
                 file_content = f.read()
             self._fastq_handle = SeqIO.parse(StringIO(file_content), formatFile)
+            content = len(file_content)
         else:
             self._fastq_handle = SeqIO.parse(fastqfile, formatFile)
-
+            with open(fastqfile) as file_check:
+                content = len(file_check.readlines())
+        # sanity check
+        if content > 0 and len(list(self._fastq_handle)) == 0:
+            if formatFile == "fasta":
+                raise Exception("Are you sure the file %s is a .fasta file?" % fastqfile)
+            elif formatFile == "fastq":
+                raise Exception("Are you sure the file %s is a .fastq file?" % fastqfile)
+            else:
+                raise Exception("Unrecognized file format: %s!!!" % fastqfile)
 
     def __full_cdr3(self):
         if not self._fastq_handle:
