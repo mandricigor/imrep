@@ -21,7 +21,7 @@ import jellyfish
 from search import IgorSuffixTree
 from cast import Cast
 from utils import *
-
+import info
 
 
 
@@ -176,86 +176,125 @@ class ImReP(object):
             pSequences = nucleotide2protein2(str(record.seq))
             if pSequences:
                 for pSeq, frame in pSequences:
-                    pos1 = pSeq.find("C")
-                    pos2 = [pSeq.rfind("F"), pSeq.rfind("W")]
+                    pos1 = [pSeq.rfind("C"), pSeq.find("C")]
+                    pos2 = [pSeq.rfind("FG"), pSeq.rfind("W")]
                     v_overlap = "NA"
                     j_overlap = "NA"
                     vtypes = {}
                     jtypes = {}
-                    if pos1 != -1:
-                        kmrs1 = self.kmers(pSeq[:pos1 + 5], kmer_len)
-                        interV = set(kmrs1) & vkeys
-                        vlist = []
-                        for v in interV:
-                            vlist.extend(list(self.hashV[v]))
-                        if vlist:
-                            vc = [x for x, y in Counter(vlist).items()]
-                        else:
-                            vc = []
-                        v_cl = {}
-                        for v in vc:
-                            if self.v_chain_type[v] not in v_cl:
-                                v_cl[self.v_chain_type[v]] = []
-                            v_cl[self.v_chain_type[v]].append(v)
-                        f, s = pSeq[:pos1], pSeq[pos1 + 1:]
-                        v_overlap = len(f) + len(s) + 1
-                        for v1, v2 in v_cl.items():
-                            for v3 in v2:
-                                if v3 not in self.vi_pieces:
-                                    continue
-                                v, vv = self.vi_pieces[v3]
-                                minlen1 = min(len(f), len(v))
-                                minlen2 = min(len(s), len(vv))
-                                if minlen1 > 0:
-                                    mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(v[-minlen1:]))
-                                else:
-                                    mismatch1 = 0
-                                if minlen2 > 0:
-                                    mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
-                                else:
-                                    mismatch2 = 0
-                                if (minlen1 == 0 and mismatch2 <= 1) or (minlen1 >= self.__settings.minlen1 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
-                                    vtypes[v3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
-                    if pos2 != [-1, -1]:
-                        if pos2[0] != -1:
-                            if pos2[1] > 10:
-                                offset = pos2[1] - 10
+                    if pos1 != [-1, -1]:
+                        if pos1[0] != -1:
+                            kmrs1 = self.kmers(pSeq[:pos1[0] + 5], kmer_len)
+                            interV = set(kmrs1) & vkeys
+                            vlist = []
+                            for v in interV:
+                                vlist.extend(list(self.hashV[v]))
+                            if vlist:
+                                vc = [x for x, y in Counter(vlist).items()]
                             else:
-                                offset = 0
-                            kmrs2 = self.kmers(pSeq[offset:], kmer_len)
-                            interJ = set(kmrs2) & jkeys
-                            jlist = []
-                            for j in interJ:
-                                jlist.extend(list(self.hashJ[j]))
-                            if jlist:
-                                jc = [x for x, y in Counter(jlist).items()]
-                            else:
-                                jc = []
-                            j_cl = {}
-                            for j in jc:
-                                if self.j_chain_type[j] != "IGHJ" and self.j_chain_type[j] not in j_cl:
-                                    j_cl[self.j_chain_type[j]] = []
-                                if self.j_chain_type[j] != "IGHJ":
-                                    j_cl[self.j_chain_type[j]].append(j)
-                            f, s = pSeq[:pos2[0]], pSeq[pos2[0] + 1:]
-                            j_overlap = len(f) + len(s) + 1
-                            for j1, j2 in j_cl.items():
-                                for j3 in j2:
-                                    if j3 not in self.jay_pieces:
+                                vc = []
+                            v_cl = {}
+                            for v in vc:
+                                if self.v_chain_type[v] != "IGHV" and self.v_chain_type[v] not in v_cl:
+                                    v_cl[self.v_chain_type[v]] = []
+                                if self.v_chain_type[v] != "IGHV":
+                                    v_cl[self.v_chain_type[v]].append(v)
+                            f, s = pSeq[:pos1[0]], pSeq[pos1[0] + 1:]
+                            v_overlap = len(f) + len(s) + 1
+                            for v1, v2 in v_cl.items():
+                                for v3 in v2:
+                                    if v3 not in self.vi_pieces:
                                         continue
-                                    j, jj = self.jay_pieces[j3]
-                                    minlen1 = min(len(f), len(j))
-                                    minlen2 = min(len(s), len(jj))
-                                    if minlen2 > 0:
-                                        mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(jj[:minlen2]))
-                                    else:
-                                        mismatch2 = 0
+                                    v, vv = self.vi_pieces[v3]
+                                    minlen1 = min(len(f), len(v))
+                                    minlen2 = min(len(s), len(vv))
                                     if minlen1 > 0:
-                                        mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
+                                        mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(v[-minlen1:]))
                                     else:
                                         mismatch1 = 0
-                                    if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 >= self.__settings.minlen1 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
-                                        jtypes[j3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
+                                    if minlen2 > 0:
+                                        mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
+                                    else:
+                                        mismatch2 = 0
+                                    if (minlen1 == 0 and mismatch2 <= 1) or (minlen1 >= self.__settings.minlen1 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
+                                        vtypes[v3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
+                        if pos1[1] != -1:
+                            kmrs1 = self.kmers(pSeq[:pos1[1] + 5], kmer_len)
+                            interV = set(kmrs1) & vkeys
+                            vlist = []
+                            for v in interV:
+                                vlist.extend(list(self.hashV[v]))
+                            if vlist:
+                                vc = [x for x, y in Counter(vlist).items()]
+                            else:
+                                vc = []
+                            v_cl = {}
+                            for v in vc:
+                                if self.v_chain_type[v] == "IGHV" and self.v_chain_type[v] not in v_cl:
+                                    v_cl[self.v_chain_type[v]] = []
+                                if self.v_chain_type[v] == "IGHV":
+                                    v_cl[self.v_chain_type[v]].append(v)
+                            f, s = pSeq[:pos1[1]], pSeq[pos1[1] + 1:]
+                            v_overlap = len(f) + len(s) + 1
+                            for v1, v2 in v_cl.items():
+                                for v3 in v2:
+                                    if v3 not in self.vi_pieces:
+                                        continue
+                                    v, vv = self.vi_pieces[v3]
+                                    minlen1 = min(len(f), len(v))
+                                    minlen2 = min(len(s), len(vv))
+                                    if minlen1 > 0:
+                                        mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(v[-minlen1:]))
+                                    else:
+                                        mismatch1 = 0
+                                    if minlen2 > 0:
+                                        mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
+                                    else:
+                                        mismatch2 = 0
+                                    if (minlen1 == 0 and mismatch2 <= 1) or (minlen1 >= 4 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
+                                        vtypes[v3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
+
+                    if pos2 != [-1, -1]:
+                        if pos2[0] != -1:
+                            if pos2[0] + 3 < len(pSeq) and pSeq[pos2[0] + 3] == "G":
+                                if pos2[0] > 10:
+                                    offset = pos2[0] - 10
+                                else:
+                                    offset = 0
+                                kmrs2 = self.kmers(pSeq[offset:], kmer_len)
+                                interJ = set(kmrs2) & jkeys
+                                jlist = []
+                                for j in interJ:
+                                    jlist.extend(list(self.hashJ[j]))
+                                if jlist:
+                                    jc = [x for x, y in Counter(jlist).items()]
+                                else:
+                                    jc = []
+                                j_cl = {}
+                                for j in jc:
+                                    if self.j_chain_type[j] != "IGHJ" and self.j_chain_type[j] not in j_cl:
+                                        j_cl[self.j_chain_type[j]] = []
+                                    if self.j_chain_type[j] != "IGHJ":
+                                        j_cl[self.j_chain_type[j]].append(j)
+                                f, s = pSeq[:pos2[0]], pSeq[pos2[0] + 1:]
+                                j_overlap = len(f) + len(s) + 1
+                                for j1, j2 in j_cl.items():
+                                    for j3 in j2:
+                                        if j3 not in self.jay_pieces:
+                                            continue
+                                        j, jj = self.jay_pieces[j3]
+                                        minlen1 = min(len(f), len(j))
+                                        minlen2 = min(len(s), len(jj))
+                                        if minlen2 > 0:
+                                            mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(jj[:minlen2]))
+                                        else:
+                                            mismatch2 = 0
+                                        if minlen1 > 0:
+                                            mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
+                                        else:
+                                            mismatch1 = 0
+                                        if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 >= self.__settings.minlen1 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
+                                            jtypes[j3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
                         if pos2[1] != -1:
                             if pos2[1] > 10:
                                 offset = pos2[1] - 10
@@ -293,7 +332,7 @@ class ImReP(object):
                                         mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
                                     else:
                                         mismatch1 = 0
-                                    if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 >= self.__settings.minlen1 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
+                                    if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 >= 4 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
                                         jtypes[j3] = (minlen1, mismatch1, minlen2, mismatch2)
                     if vtypes or jtypes:
                         vt = {}
@@ -320,11 +359,11 @@ class ImReP(object):
                         common = set(vt.keys()) & set(jt.keys())
                         if common:
                             if "IGH" in common:
-                                full_cdr3.append(pSeq[pos1: pos2[1] + 1])
-                                cdr3 = pSeq[pos1: pos2[1] + 1]
+                                full_cdr3.append(pSeq[pos1[1]: pos2[1] + 1])
+                                cdr3 = pSeq[pos1[1]: pos2[1] + 1]
                             else:
-                                full_cdr3.append(pSeq[pos1: pos2[0] + 1])
-                                cdr3 = pSeq[pos1: pos2[0] + 1]
+                                full_cdr3.append(pSeq[pos1[0]: pos2[0] + 1])
+                                cdr3 = pSeq[pos1[0]: pos2[0] + 1]
                             if cdr3 not in self.cdr3_dict:
                                 self.cdr3_dict[cdr3] = []
                             self.cdr3_dict[cdr3].append(record.id)
@@ -346,7 +385,10 @@ class ImReP(object):
                                         chtype[key].extend(ch)
                                 self.pSeq_read_map[cdr3] = {"v": map(getGeneType, v_t), "j": map(getGeneType, j_t), "chain_type": chtype}
                         elif vtypes and not jtypes:
-                            vi_partial = pSeq[pos1:]
+                            if "IGH" in vtypes:
+                                vi_partial = pSeq[pos1[1]:]
+                            else:
+                                vi_partial = pSeq[pos1[0]:]
                             if vi_partial not in full_cdr3:
                                 self.just_v.append(vi_partial)
                                 if vi_partial not in self.just_v_dict:
@@ -407,7 +449,11 @@ class ImReP(object):
                             if key not in chtype:
                                 chtype[key] = []
                             chtype[key].extend(ch)
-                    newly_born_cdr3 = list(overlapping_v)[0].data + j[overlap:]
+                    if len(j[overlap:]) > 0:
+                        newly_born_cdr3 = list(overlapping_v)[0].data + j[overlap:]
+                    else:
+                        position_of_j_in_v = list(overlapping_v)[0].data.rfind(j)
+                        newly_born_cdr3 = list(overlapping_v)[0].data[:position_of_j_in_v + len(j)]
                     if newly_born_cdr3 not in self.cdr3_dict:
                         self.cdr3_dict[newly_born_cdr3] = []
                     if list(overlapping_v)[0].data in self.just_v_dict:
@@ -423,7 +469,7 @@ class ImReP(object):
                     countVJ = min(countV, countJ)
                     for x in range(countVJ):
                         handshakes.append(newly_born_cdr3)
-                    self.pSeq_read_map[newly_born_cdr3] = {"v": v_t, "j": j_t, "chain_type": chtype}
+                    self.pSeq_read_map[newly_born_cdr3] = {"v": v_t, "j": j_t, "chain_type": chtype, "overlap": overlap}
         return handshakes
 
 
@@ -443,8 +489,23 @@ class ImReP(object):
             clones2 = self.__vj_handshakes()
             clones.extend(clones2)
         clones = Counter(clones)
-        cast_clustering = Cast(clones)
-        clustered_clones = cast_clustering.doCast(self.__settings.castThreshold)
+        for x, y in clones.items():
+            if x.endswith("G"): # cleaning of TRA
+                del clones[x]
+                clones[x[:-1]] = y
+        # here we have to cluster each chain type separately
+        clones_by_type = {}
+        for cdr3, count in clones.items():
+            chtypes = map(lambda xx: (xx[0], len(xx[1])), self.pSeq_read_map[cdr3]["chain_type"].items())
+            chtype = [xx for xx, yy in chtypes if yy == max(chtypes, key=lambda zz: zz[1])[1]][0]
+            if chtype not in clones_by_type:
+                clones_by_type[chtype] = {}
+            clones_by_type[chtype][cdr3] = count
+        clustered_clones = []
+        for chtype, clones in clones_by_type.items():
+            cast_clustering = Cast(clones)
+            clustered = cast_clustering.doCast(self.__settings.castThreshold[chtype])
+            clustered_clones.extend(clustered)
         self.clone_dict = {}
         for clone in clustered_clones:
             self.clone_dict[clone[0]] = clone[2]
@@ -479,7 +540,7 @@ if __name__ == "__main__":
     optional_arguments.add_argument("-o", "--overlapLen", help="the minimal length to consider between reads overlapping with a V gene and reads overlapping with a J gene. Default value is 10 amino acids.", type=int)
     optional_arguments.add_argument("--noOverlapStep", help="a binary flag used in case if the user does not want to run the second stage of the ImReP assembly.", dest="noOverlapStep", action="store_true")
     optional_arguments.add_argument("--extendedOutput", help="extended output: write information read by read", dest="extendedOutput", action="store_true")
-    optional_arguments.add_argument("-t", "--castThreshold", help="the -t option has been added to control the stringency of CDR3 clustering. The value can be from 0.0 to 1.0. Note that thresholds near 1.0 are more liberal and result in more CDR3 to be reported. The default value is 0.2", type=float)
+    #optional_arguments.add_argument("-t", "--castThreshold", help="the -t option has been added to control the stringency of CDR3 clustering. The value can be from 0.0 to 1.0. Note that thresholds near 1.0 are more liberal and result in more CDR3 to be reported. The default value is 0.2", type=float)
     optional_arguments.add_argument("-c", "--chains", help="chains: comma separated values from IGH,IGK,IGL,TRA,TRB,TRD,TRG", type=str)
 
     advanced_arguments = ap.add_argument_group("Advanced Inputs")
@@ -502,9 +563,9 @@ if __name__ == "__main__":
         'overlapLen': 10,
         'noOverlapStep': False,
         'extendedOutput': False,
-        'castThreshold': 0.2,
+        'castThreshold': {'IGH': 0.2, 'IGK': 0.2, 'IGL': 0.2, 'TRA': 0.3, 'TRB': 0.3, 'TRD': 0.3, 'TRG': 0.3},
         'chains': ['IGH','IGK','IGL','TRA','TRB','TRD','TRG'],
-        'minlen1': 4,
+        'minlen1': 2,
         'minlen2': 1,
         'mismatch1': 2,
         'mismatch2': 2
@@ -523,8 +584,8 @@ if __name__ == "__main__":
         set_dict["isFastq"] = args.isFastq
     if args.extendedOutput is not None:
         set_dict["extendedOutput"] = args.extendedOutput
-    if args.castThreshold:
-        set_dict["castThreshold"] = args.castThreshold
+    #if args.castThreshold:
+    #    set_dict["castThreshold"] = args.castThreshold
     if args.chains:
         set_dict["chains"] = args.chains.split(",")
     if args.minOverlap1:
@@ -538,7 +599,9 @@ if __name__ == "__main__":
 
     settings = Settings(**set_dict)
 
-    print "Starting ImReP-0.1"
+    release = info.info.get("release", "0.1")
+    print "Starting ImReP-%s (developped by %s)" % (release, ", ".join(info.info.get("contributors", "")))
+    print info.info.get("hello")
     imrep = ImReP(settings)
     clones = imrep.doComputeClones()
 
