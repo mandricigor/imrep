@@ -1,4 +1,3 @@
-
 import sys
 import argparse
 import os
@@ -177,7 +176,7 @@ class ImReP(object):
             if pSequences:
                 for pSeq, frame in pSequences:
                     pos1 = [pSeq.rfind("C"), pSeq.find("C")]
-                    pos2 = [pSeq.rfind("FG"), pSeq.rfind("W")]
+                    pos2 = [pSeq.rfind("FG"), pSeq.rfind("WG")]
                     v_overlap = "NA"
                     j_overlap = "NA"
                     vtypes = {}
@@ -216,7 +215,7 @@ class ImReP(object):
                                         mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
                                     else:
                                         mismatch2 = 0
-                                    if (minlen1 == 0 and mismatch2 <= 1) or (minlen1 >= self.__settings.minlen1 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
+                                    if (minlen1 <= 1 and mismatch2 <= 1) or (minlen1 >= self.__settings.minlen1 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
                                         vtypes[v3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
                         if pos1[1] != -1:
                             kmrs1 = self.kmers(pSeq[:pos1[1] + 5], kmer_len)
@@ -234,7 +233,11 @@ class ImReP(object):
                                     v_cl[self.v_chain_type[v]] = []
                                 if self.v_chain_type[v] == "IGHV":
                                     v_cl[self.v_chain_type[v]].append(v)
+
                             f, s = pSeq[:pos1[1]], pSeq[pos1[1] + 1:]
+
+
+
                             v_overlap = len(f) + len(s) + 1
                             for v1, v2 in v_cl.items():
                                 for v3 in v2:
@@ -251,7 +254,8 @@ class ImReP(object):
                                         mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
                                     else:
                                         mismatch2 = 0
-                                    if (minlen1 == 0 and mismatch2 <= 1) or (minlen1 >= 4 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
+                                    if (minlen1 <= 3 and mismatch2 <= 1) or (minlen1 >= 2 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
+
                                         vtypes[v3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
 
                     if pos2 != [-1, -1]:
@@ -293,7 +297,7 @@ class ImReP(object):
                                             mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
                                         else:
                                             mismatch1 = 0
-                                        if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 >= self.__settings.minlen1 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
+                                        if (minlen2 <= 1 and mismatch1 <= 1) or (minlen2 >= self.__settings.minlen1 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
                                             jtypes[j3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
                         if pos2[1] != -1:
                             if pos2[1] > 10:
@@ -332,7 +336,7 @@ class ImReP(object):
                                         mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
                                     else:
                                         mismatch1 = 0
-                                    if (minlen2 == 0 and mismatch1 <= 1) or (minlen2 >= 4 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
+                                    if (minlen2 <= 3 and mismatch1 <= 1) or (minlen2 >= 2 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
                                         jtypes[j3] = (minlen1, mismatch1, minlen2, mismatch2)
                     if vtypes or jtypes:
                         vt = {}
@@ -385,10 +389,11 @@ class ImReP(object):
                                         chtype[key].extend(ch)
                                 self.pSeq_read_map[cdr3] = {"v": map(getGeneType, v_t), "j": map(getGeneType, j_t), "chain_type": chtype}
                         elif vtypes and not jtypes:
-                            if "IGH" in vtypes:
-                                vi_partial = pSeq[pos1[1]:]
-                            else:
-                                vi_partial = pSeq[pos1[0]:]
+                            #if "IGH" in vtypes:
+                            #    vi_partial = pSeq[pos1[1]:]
+                            #else:
+                            #    vi_partial = pSeq[pos1[0]:]
+                            vi_partial = pSeq[pos1[1]:]
                             if vi_partial not in full_cdr3:
                                 self.just_v.append(vi_partial)
                                 if vi_partial not in self.just_v_dict:
@@ -432,6 +437,7 @@ class ImReP(object):
             overlap, index, terminal = stree.search_stree(j)
             if terminal and len(j[:overlap]) >= self.__settings.overlapLen:
                 overlapping_v = itree.search(index)
+
                 common_chains = set(self.pSeq_read_map[list(overlapping_v)[0].data]["chain_type"].keys()) & set(self.pSeq_read_map[j]["chain_type"].keys())
                 if common_chains:
                     v_t = []
@@ -560,7 +566,7 @@ if __name__ == "__main__":
         'isFastq': False,
         'species': "human",
         'fastqfile': fastqfile,
-        'overlapLen': 10,
+        'overlapLen': 5,
         'noOverlapStep': False,
         'extendedOutput': False,
         'castThreshold': {'IGH': 0.2, 'IGK': 0.2, 'IGL': 0.2, 'TRA': 0.3, 'TRB': 0.3, 'TRD': 0.3, 'TRG': 0.3},
