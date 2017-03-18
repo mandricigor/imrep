@@ -215,7 +215,7 @@ class ImReP(object):
                                         mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
                                     else:
                                         mismatch2 = 0
-                                    if (minlen1 <= 1 and mismatch2 <= 1) or (minlen1 >= self.__settings.minlen1 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
+                                    if (minlen1 <= 3 and mismatch2 <= 1) or (minlen1 >= self.__settings.minlen1 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
                                         vtypes[v3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
                         if pos1[1] != -1:
                             kmrs1 = self.kmers(pSeq[:pos1[1] + 5], kmer_len)
@@ -236,8 +236,6 @@ class ImReP(object):
 
                             f, s = pSeq[:pos1[1]], pSeq[pos1[1] + 1:]
 
-
-
                             v_overlap = len(f) + len(s) + 1
                             for v1, v2 in v_cl.items():
                                 for v3 in v2:
@@ -254,13 +252,13 @@ class ImReP(object):
                                         mismatch2 = jellyfish.levenshtein_distance(unicode(s[:minlen2]), unicode(vv[:minlen2]))
                                     else:
                                         mismatch2 = 0
-                                    if (minlen1 <= 3 and mismatch2 <= 1) or (minlen1 >= 2 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
+                                    if (minlen1 <= 3 and mismatch2 <= 1) or (minlen1 >= self.__settings.minlen1 and mismatch1 <= self.__settings.mismatch1 and minlen2 >= self.__settings.minlen2 and mismatch2 <= self.__settings.mismatch2):
 
                                         vtypes[v3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
 
                     if pos2 != [-1, -1]:
                         if pos2[0] != -1:
-                            if pos2[0] + 3 < len(pSeq) and pSeq[pos2[0] + 3] == "G":
+                            if True: #pos2[0] + 3 < len(pSeq) and pSeq[pos2[0] + 3] == "G":
                                 if pos2[0] > 10:
                                     offset = pos2[0] - 10
                                 else:
@@ -297,7 +295,7 @@ class ImReP(object):
                                             mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
                                         else:
                                             mismatch1 = 0
-                                        if (minlen2 <= 1 and mismatch1 <= 1) or (minlen2 >= self.__settings.minlen1 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
+                                        if (minlen2 <= 3 and mismatch1 <= 1) or (minlen2 >= self.__settings.minlen1 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
                                             jtypes[j3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
                         if pos2[1] != -1:
                             if pos2[1] > 10:
@@ -336,8 +334,8 @@ class ImReP(object):
                                         mismatch1 = jellyfish.levenshtein_distance(unicode(f[-minlen1:]), unicode(j[-minlen1:]))
                                     else:
                                         mismatch1 = 0
-                                    if (minlen2 <= 3 and mismatch1 <= 1) or (minlen2 >= 2 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
-                                        jtypes[j3] = (minlen1, mismatch1, minlen2, mismatch2)
+                                    if (minlen2 <= 3 and mismatch1 <= 1) or (minlen2 >= self.__settings.minlen1 and mismatch2 <= self.__settings.mismatch1 and minlen1 >= self.__settings.minlen2 and mismatch1 <= self.__settings.mismatch2):
+                                        jtypes[j3] = (minlen1 + minlen2 + 1, mismatch1 + mismatch2)
                     if vtypes or jtypes:
                         vt = {}
                         vscore = {}
@@ -424,13 +422,15 @@ class ImReP(object):
 
         itree = IntervalTree()
 
+        just_v_keys = map(lambda x: x[0], sorted(just_v.items(), key=lambda z:z[1], reverse=True))
+
         start = 0
-        for v in just_v.keys():
+        for v in just_v_keys:
             end = start + len(v) + 1
             itree.addi(start, end, v)
             start = end
 
-        all_v_suf = "|".join(just_v.keys())
+        all_v_suf = "|".join(just_v_keys)
         stree = IgorSuffixTree(all_v_suf)
 
         for j, jj in just_j.items():
@@ -512,6 +512,7 @@ class ImReP(object):
             cast_clustering = Cast(clones)
             clustered = cast_clustering.doCast(self.__settings.castThreshold[chtype])
             clustered_clones.extend(clustered)
+        clustered_clones = [cclone for cclone in clustered_clones if cclone[1] > 1] # filter out garbage
         self.clone_dict = {}
         for clone in clustered_clones:
             self.clone_dict[clone[0]] = clone[2]
@@ -543,7 +544,7 @@ if __name__ == "__main__":
     optional_arguments = ap.add_argument_group("Optional Inputs")
     optional_arguments.add_argument("--fastq", help="a binary flag used to indicate that the input file with unmapped reads is in fastq format", dest="isFastq", action="store_true")
     optional_arguments.add_argument("-s", "--species", help="species (human or mouse, default human)", type=str, dest="species")
-    optional_arguments.add_argument("-o", "--overlapLen", help="the minimal length to consider between reads overlapping with a V gene and reads overlapping with a J gene. Default value is 10 amino acids.", type=int)
+    optional_arguments.add_argument("-o", "--overlapLen", help="the minimal length to consider between reads overlapping with a V gene and reads overlapping with a J gene. Default value is 5 amino acids.", type=int)
     optional_arguments.add_argument("--noOverlapStep", help="a binary flag used in case if the user does not want to run the second stage of the ImReP assembly.", dest="noOverlapStep", action="store_true")
     optional_arguments.add_argument("--extendedOutput", help="extended output: write information read by read", dest="extendedOutput", action="store_true")
     #optional_arguments.add_argument("-t", "--castThreshold", help="the -t option has been added to control the stringency of CDR3 clustering. The value can be from 0.0 to 1.0. Note that thresholds near 1.0 are more liberal and result in more CDR3 to be reported. The default value is 0.2", type=float)
@@ -569,7 +570,7 @@ if __name__ == "__main__":
         'overlapLen': 5,
         'noOverlapStep': False,
         'extendedOutput': False,
-        'castThreshold': {'IGH': 0.2, 'IGK': 0.2, 'IGL': 0.2, 'TRA': 0.3, 'TRB': 0.3, 'TRD': 0.3, 'TRG': 0.3},
+        'castThreshold': {'IGH': 0.2, 'IGK': 0.2, 'IGL': 0.2, 'TRA': 0.3, 'TRB': 0.2, 'TRD': 0.2, 'TRG': 0.2},
         'chains': ['IGH','IGK','IGL','TRA','TRB','TRD','TRG'],
         'minlen1': 2,
         'minlen2': 1,
