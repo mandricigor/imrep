@@ -63,8 +63,8 @@ class ImReP(object):
         self.__populate_d()
         self.__populate_j()
         self.__read_reads()
-
         self.debug_info = {}
+        self.clonotype_CDR3_count_dict = {}
 
 
     def kmers(self, string, k):
@@ -132,31 +132,28 @@ class ImReP(object):
         formatFile = "fasta"
         if self.__settings.isFastq:
             formatFile = "fastq"
-        #if fastqfile.endswith(".fa") or fastqfile.endswith(".fasta") or fastqfile.endswith(".fna") \
-        #    or fastqfile.endswith(".fa.gz") or fastqfile.endswith(".fasta.gz") or fastqfile.endswith(".fna.gz"):
-        #    formatFile = "fasta"
-        #elif fastqfile.endswith(".fq") or fastqfile.endswith(".fastq") \
-        #    or fastqfile.endswith(".fq.gz") or fastqfile.endswith(".fastq.gz"):
-        #    formatFile = "fastq"
-        #else:
-        #    raise Exception("Unrecognized format of input file. Please, provide either .fasta or .fastq file")
         if fastqfile.endswith(".gz"):
             with gzip.open(fastqfile, 'rb') as f:
+                firstLine = f.readline()
                 file_content = f.read()
             self._fastq_handle = SeqIO.parse(StringIO(file_content), formatFile)
-            content = len(file_content)
         else:
             self._fastq_handle = SeqIO.parse(fastqfile, formatFile)
             with open(fastqfile) as file_check:
-                content = len(file_check.readlines())
-        # sanity check
-        if content > 0 and not self._fastq_handle:
+                firstLine = file_check.readline()
+        if not firstLine:
+            print "Empty file"
+        else:
+            # sanity check
             if formatFile == "fasta":
-                raise Exception("Are you sure the file %s is a .fasta file?" % fastqfile)
+                if firstLine[0] != ">":
+                    raise Exception("Are you sure the file %s is a .fasta file?" % fastqfile)
             elif formatFile == "fastq":
-                raise Exception("Are you sure the file %s is a .fastq file?" % fastqfile)
+                if firstLine[0] != "@":
+                    raise Exception("Are you sure the file %s is a .fastq file?" % fastqfile)
             else:
                 raise Exception("Unrecognized file format: %s!!!" % fastqfile)
+
 
     def __full_cdr3(self):
         if not self._fastq_handle:
@@ -167,9 +164,9 @@ class ImReP(object):
         for record in self._fastq_handle:
             # If we have paired-end reads,
             # then we have to distinguish them
-            if "/1" in record.description:
+            if "/1" not in record.description:
                 record.id += "/1"
-            if "/2" in record.description:
+            if "/2" not in record.description:
                 record.id += "/2"
             self.debug_info[record.id] = {}
             pSequences = nucleotide2protein2(str(record.seq))
@@ -472,7 +469,7 @@ class ImReP(object):
                         del self.just_j_dict[j]
                     countV = just_v[list(overlapping_v)[0].data]
                     countJ = just_j[j]
-                    countVJ = min(countV, countJ)
+                    countVJ = countV + countJ
                     for x in range(countVJ):
                         handshakes.append(newly_born_cdr3)
                     self.pSeq_read_map[newly_born_cdr3] = {"v": v_t, "j": j_t, "chain_type": chtype, "overlap": overlap}
@@ -511,8 +508,9 @@ class ImReP(object):
         for chtype, clones in clones_by_type.items():
             cast_clustering = Cast(clones)
             clustered = cast_clustering.doCast(self.__settings.castThreshold[chtype])
+            clustered = [cclone for cclone in clustered if cclone[1] > 1] # filter out garbage
+            self.clonotype_CDR3_count_dict[chtype] = len(clustered)
             clustered_clones.extend(clustered)
-        clustered_clones = [cclone for cclone in clustered_clones if cclone[1] > 1] # filter out garbage
         self.clone_dict = {}
         for clone in clustered_clones:
             self.clone_dict[clone[0]] = clone[2]
@@ -547,7 +545,6 @@ if __name__ == "__main__":
     optional_arguments.add_argument("-o", "--overlapLen", help="the minimal length to consider between reads overlapping with a V gene and reads overlapping with a J gene. Default value is 5 amino acids.", type=int)
     optional_arguments.add_argument("--noOverlapStep", help="a binary flag used in case if the user does not want to run the second stage of the ImReP assembly.", dest="noOverlapStep", action="store_true")
     optional_arguments.add_argument("--extendedOutput", help="extended output: write information read by read", dest="extendedOutput", action="store_true")
-    #optional_arguments.add_argument("-t", "--castThreshold", help="the -t option has been added to control the stringency of CDR3 clustering. The value can be from 0.0 to 1.0. Note that thresholds near 1.0 are more liberal and result in more CDR3 to be reported. The default value is 0.2", type=float)
     optional_arguments.add_argument("-c", "--chains", help="chains: comma separated values from IGH,IGK,IGL,TRA,TRB,TRD,TRG", type=str)
 
     advanced_arguments = ap.add_argument_group("Advanced Inputs")
@@ -591,8 +588,6 @@ if __name__ == "__main__":
         set_dict["isFastq"] = args.isFastq
     if args.extendedOutput is not None:
         set_dict["extendedOutput"] = args.extendedOutput
-    #if args.castThreshold:
-    #    set_dict["castThreshold"] = args.castThreshold
     if args.chains:
         set_dict["chains"] = args.chains.split(",")
     if args.minOverlap1:
@@ -616,7 +611,10 @@ if __name__ == "__main__":
     final_clones = []
     if set_dict["extendedOutput"]:
         with open("full_cdr3.txt", "w") as f:
-            for cl in clones:
+           header_line = "Read_name\tFull_CDR3_AA_Seq\tV_chains\tD_chains\tJ_chains\tV_allele_name:overlap_aminoacids:mismatches_aminoacids\tD_allele_name:overlap_aminoacids:mismatches_aminoacids\tIs_V_allele_uniq\tIs_V_allele_uniq\tAre_both_V_and_J_alleles_uniq\n"
+           f.write(header_line)
+           for cl in clones:
+                #isOverlapping = int(imrep.pSeq_read_map[cl[0]].get("overlap", "NA") != "NA")
                 for clon in imrep.clone_dict[cl[0]]:
                     for read in imrep.cdr3_dict[clon]:
                         dinfo_v = imrep.debug_info[read].get("vscore", {})
@@ -648,6 +646,8 @@ if __name__ == "__main__":
                         f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (read, cl[0], cl[1], cl[2], cl[3], di_v, di_j, uniq_v, uniq_j, uniq_vj))
                         final_clones.append(cl[0] + "\t%s\t" + "%s\t%s\t%s\n" % (cl[1], cl[2], cl[3]))
         with open("partial_cdr3.txt", "w") as f:
+            header_line = "Read_name\tPartial_CDR3_AA_Seq\tV_chains\tD_chains\tJ_chains\tV_allele_name:overlap_aminoacids:mismatches_aminoacids\tD_allele_name:overlap_aminoacids:mismatches_aminoacids\tIs_V_allele_uniq\tIs_V_allele_uniq\tAre_both_V_and_J_alleles_uniq\n"
+            f.write(header_line)
             for x, y in imrep.just_v_dict.items():
                 for read in y:
                     v = ",".join(list(set(imrep.pSeq_read_map[x].get("v", ["NA"])))[:3])
@@ -680,7 +680,7 @@ if __name__ == "__main__":
                         di_j = "NA"
                     f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (read, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
             for x, y in imrep.just_j_dict.items():
-                for read in y:
+               for read in y:
                     v = ",".join(list(set(imrep.pSeq_read_map[x].get("v", ["NA"])))[:3])
                     j = ",".join(list(set(imrep.pSeq_read_map[x].get("j", ["NA"])))[:3])
                     dinfo_v = imrep.debug_info[read].get("vscore", {})
@@ -744,7 +744,12 @@ if __name__ == "__main__":
     final_clones = Counter(final_clones)
     print "%s partial-V CDR3 found" % len(imrep.just_v_dict)
     print "%s partial-J CDR3 found" % len(imrep.just_j_dict)
-    print "%s full CDR3 found" % len(final_clones)
+    if len(final_clones):
+        print "%s full CDR3 found:" % len(final_clones)
+        for x, y in imrep.clonotype_CDR3_count_dict.items():
+            print "\t- %s of type %s" % (y, x)
+    else:
+        print "No full CDR3 found"
     clones = []
     for x, y in final_clones.items():
         clones.append(x % y)
