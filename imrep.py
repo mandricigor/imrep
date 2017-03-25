@@ -563,6 +563,8 @@ if __name__ == "__main__":
     isFastq = args.isFastq
     outFile = args.output_clones
 
+    sampleName = os.path.splitext(os.path.basename(fastqfile))[0]    
+
     outDir = os.path.dirname(outFile)
     if outDir == "":
         outDir = "."
@@ -619,7 +621,7 @@ if __name__ == "__main__":
 
     final_clones = []
     if set_dict["extendedOutput"]:
-        with open(outDir + "/" + "full_cdr3.txt", "w") as f:
+        with open(outDir + "/" + "full_cdr3_%s.txt" % sampleName, "w") as f:
            header_line = "Read_name\tFull_CDR3_AA_Seq\tV_chains\tD_chains\tJ_chains\tV_allele_name:overlap_aminoacids:mismatches_aminoacids\tD_allele_name:overlap_aminoacids:mismatches_aminoacids\tIs_V_allele_uniq\tIs_V_allele_uniq\tAre_both_V_and_J_alleles_uniq\n"
            f.write(header_line)
            for cl in clones:
@@ -654,7 +656,7 @@ if __name__ == "__main__":
                             di_j = "NA"
                         f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (read, cl[0], cl[1], cl[2], cl[3], di_v, di_j, uniq_v, uniq_j, uniq_vj))
                         final_clones.append(cl[0] + "\t%s\t" + "%s\t%s\t%s\n" % (cl[1], cl[2], cl[3]))
-        with open(outDir + "/" + "partial_cdr3.txt", "w") as f:
+        with open(outDir + "/" + "partial_cdr3_%s.txt" % sampleName, "w") as f:
             header_line = "Read_name\tPartial_CDR3_AA_Seq\tV_chains\tD_chains\tJ_chains\tV_allele_name:overlap_aminoacids:mismatches_aminoacids\tD_allele_name:overlap_aminoacids:mismatches_aminoacids\tIs_V_allele_uniq\tIs_V_allele_uniq\tAre_both_V_and_J_alleles_uniq\n"
             f.write(header_line)
             for x, y in imrep.just_v_dict.items():
