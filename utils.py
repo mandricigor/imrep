@@ -65,7 +65,7 @@ def dumpClones(clones, outFile):
 
 
 def dumpClones2(clones, outFile):
-    header_line = "CDR3_AA_Seq\tRead_count\tV_chains\tD_chains\tJ_chains\n"
+    header_line = "CDR3_AA_Seq\tChain_type\tRead_count\tV_chains\tD_chains\tJ_chains\n"
     with open(outFile, "w") as f:
         f.write(header_line)
         for clone in clones:

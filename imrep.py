@@ -1,6 +1,7 @@
 import sys
 import argparse
 import os
+import os
 from collections import Counter
 import gzip
 
@@ -509,14 +510,16 @@ class ImReP(object):
             cast_clustering = Cast(clones)
             clustered = cast_clustering.doCast(self.__settings.castThreshold[chtype])
             clustered = [cclone for cclone in clustered if cclone[1] > 1] # filter out garbage
+            for cl in clustered:
+                cl.append(chtype)
             self.clonotype_CDR3_count_dict[chtype] = len(clustered)
             clustered_clones.extend(clustered)
         self.clone_dict = {}
         for clone in clustered_clones:
             self.clone_dict[clone[0]] = clone[2]
+            chain_type = clone[3]
             del clone[2]
             del clone[1] # remove counts for now
-            chain_type = self.pSeq_read_map[clone[0]]["v"][0][:3]
             j_types = None
             if chain_type in ["IGH", "TRB", "TRD"]:
                 j_types = self.__map_d(clone[0], chain_type)
@@ -559,6 +562,12 @@ if __name__ == "__main__":
     fastqfile = args.reads_file
     isFastq = args.isFastq
     outFile = args.output_clones
+
+    outDir = os.path.dirname(outFile)
+    if outDir == "":
+        outDir = "."
+    if not os.path.exists(outDir):
+        os.mkdir(outDir)
 
     set_dict = {
         'isFastq': False,
@@ -610,7 +619,7 @@ if __name__ == "__main__":
 
     final_clones = []
     if set_dict["extendedOutput"]:
-        with open("full_cdr3.txt", "w") as f:
+        with open(outDir + "/" + "full_cdr3.txt", "w") as f:
            header_line = "Read_name\tFull_CDR3_AA_Seq\tV_chains\tD_chains\tJ_chains\tV_allele_name:overlap_aminoacids:mismatches_aminoacids\tD_allele_name:overlap_aminoacids:mismatches_aminoacids\tIs_V_allele_uniq\tIs_V_allele_uniq\tAre_both_V_and_J_alleles_uniq\n"
            f.write(header_line)
            for cl in clones:
@@ -645,7 +654,7 @@ if __name__ == "__main__":
                             di_j = "NA"
                         f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (read, cl[0], cl[1], cl[2], cl[3], di_v, di_j, uniq_v, uniq_j, uniq_vj))
                         final_clones.append(cl[0] + "\t%s\t" + "%s\t%s\t%s\n" % (cl[1], cl[2], cl[3]))
-        with open("partial_cdr3.txt", "w") as f:
+        with open(outDir + "/" + "partial_cdr3.txt", "w") as f:
             header_line = "Read_name\tPartial_CDR3_AA_Seq\tV_chains\tD_chains\tJ_chains\tV_allele_name:overlap_aminoacids:mismatches_aminoacids\tD_allele_name:overlap_aminoacids:mismatches_aminoacids\tIs_V_allele_uniq\tIs_V_allele_uniq\tAre_both_V_and_J_alleles_uniq\n"
             f.write(header_line)
             for x, y in imrep.just_v_dict.items():
@@ -740,13 +749,14 @@ if __name__ == "__main__":
                     di_j = ",".join(di_j)
                     if not di_j:
                         di_j = "NA"
-                    final_clones.append(cl[0] + "\t%s\t" + "%s\t%s\t%s\n" % (cl[1], cl[2], cl[3]))
+                    final_clones.append(cl[0] + "\t%s" % cl[1] + "\t%s\t" + "%s\t%s\t%s\n" % (cl[2], cl[3], cl[4]))
     final_clones = Counter(final_clones)
     print "%s partial-V CDR3 found" % len(imrep.just_v_dict)
     print "%s partial-J CDR3 found" % len(imrep.just_j_dict)
     if len(final_clones):
         print "%s full CDR3 found:" % len(final_clones)
-        for x, y in imrep.clonotype_CDR3_count_dict.items():
+        for x in ['IGH','IGK','IGL','TRA','TRB','TRD','TRG']:
+            y = imrep.clonotype_CDR3_count_dict.get(x, 0)
             print "\t- %s of type %s" % (y, x)
     else:
         print "No full CDR3 found"
