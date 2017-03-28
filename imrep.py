@@ -66,7 +66,7 @@ class ImReP(object):
         self.__read_reads()
         self.debug_info = {}
         self.clonotype_CDR3_count_dict = {}
-
+        self.read_names = {}
 
     def kmers(self, string, k):
         kmrs = []
@@ -165,10 +165,14 @@ class ImReP(object):
         for record in self._fastq_handle:
             # If we have paired-end reads,
             # then we have to distinguish them
-            if "/1" not in record.description:
-                record.id += "/1"
-            if "/2" not in record.description:
-                record.id += "/2"
+            if record.id not in self.read_names:
+                self.read_names[record.id] = 1
+                record.id += "___1"
+            else:
+                count_existing = self.read_names[record.id]
+                record.id += "___%s" % count_existing
+                self.read_names[record.id] = count_existing + 1
+                
             self.debug_info[record.id] = {}
             pSequences = nucleotide2protein2(str(record.seq))
             if pSequences:
@@ -628,6 +632,10 @@ if __name__ == "__main__":
                 #isOverlapping = int(imrep.pSeq_read_map[cl[0]].get("overlap", "NA") != "NA")
                 for clon in imrep.clone_dict[cl[0]]:
                     for read in imrep.cdr3_dict[clon]:
+                        if "___" in read:
+                            readId = read.split("___")[0]
+                        else:
+                            readId = read
                         dinfo_v = imrep.debug_info[read].get("vscore", {})
                         dinfo_j = imrep.debug_info[read].get("jscore", {})
                         di_v = []
@@ -654,13 +662,17 @@ if __name__ == "__main__":
                         di_j = ",".join(di_j)
                         if not di_j:
                             di_j = "NA"
-                        f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (read, cl[0], cl[1], cl[2], cl[3], di_v, di_j, uniq_v, uniq_j, uniq_vj))
+                        f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (readId, cl[0], cl[1], cl[2], cl[3], di_v, di_j, uniq_v, uniq_j, uniq_vj))
                         final_clones.append(cl[0] + "\t%s\t" + "%s\t%s\t%s\n" % (cl[1], cl[2], cl[3]))
         with open(outDir + "/" + "partial_cdr3_%s.txt" % sampleName, "w") as f:
             header_line = "Read_name\tPartial_CDR3_AA_Seq\tV_chains\tD_chains\tJ_chains\tV_allele_name:overlap_aminoacids:mismatches_aminoacids\tD_allele_name:overlap_aminoacids:mismatches_aminoacids\tIs_V_allele_uniq\tIs_V_allele_uniq\tAre_both_V_and_J_alleles_uniq\n"
             f.write(header_line)
             for x, y in imrep.just_v_dict.items():
                 for read in y:
+                    if "___" in read:
+                        readId = read.split("___")[0]
+                    else:
+                        readId = read
                     v = ",".join(list(set(imrep.pSeq_read_map[x].get("v", ["NA"])))[:3])
                     j = ",".join(list(set(imrep.pSeq_read_map[x].get("j", ["NA"])))[:3])
                     dinfo_v = imrep.debug_info[read].get("vscore", {})
@@ -689,9 +701,13 @@ if __name__ == "__main__":
                     di_j = ",".join(di_j)
                     if not di_j:
                         di_j = "NA"
-                    f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (read, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
+                    f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (readId, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
             for x, y in imrep.just_j_dict.items():
                for read in y:
+                    if "___" in read:
+                        readId = read.split("___")[0]
+                    else:
+                        readId = read
                     v = ",".join(list(set(imrep.pSeq_read_map[x].get("v", ["NA"])))[:3])
                     j = ",".join(list(set(imrep.pSeq_read_map[x].get("j", ["NA"])))[:3])
                     dinfo_v = imrep.debug_info[read].get("vscore", {})
@@ -720,7 +736,7 @@ if __name__ == "__main__":
                     di_j = ",".join(di_j)
                     if not di_j:
                         di_j = "NA"
-                    f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (read, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
+                    f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (readId, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
     else:
         for cl in clones:
             for clon in imrep.clone_dict[cl[0]]:
@@ -767,4 +783,5 @@ if __name__ == "__main__":
         clones.append(x % y)
     dumpClones2(clones, outFile)
     print "Done. Bye-bye"
+
 
