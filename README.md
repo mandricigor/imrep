@@ -13,4 +13,4 @@ ImReP is able to quantify individual immune response based on a recombination la
 
 ## Contact
 
-This software was developed by Igor Mandric and [Serghei Mangul] (https://sergheimangul.wordpress.com/). Please do not hesitate to contact us (imandric1@student.gsu.edu, smangul@ucla.edu) if you have any comments, suggestions, or clarification requests regarding the tutorial or if you would like to contribute to this resource.
+This software was developed by Igor Mandric and [Serghei Mangul](https://sergheimangul.wordpress.com/). Please do not hesitate to contact us (imandric1@student.gsu.edu, smangul@ucla.edu) if you have any comments, suggestions, or clarification requests regarding the tutorial or if you would like to contribute to this resource.
