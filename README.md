@@ -22,4 +22,4 @@ Mangul, Serghei and Mandric Igor, et al., “Profiling adaptive immune repertoir
 
 ## Presentations
 
-Talk at PSB 2017 workshop on Open Data for Discovery Science  are available here : https://sergheimangul.files.wordpress.com/2017/01/psb2017_public1.pdf 
+Slides from the talk at PSB 2017 workshop on Open Data for Discovery Science  are available here : https://sergheimangul.files.wordpress.com/2017/01/psb2017_public1.pdf 
