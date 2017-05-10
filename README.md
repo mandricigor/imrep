@@ -14,3 +14,12 @@ ImReP is able to quantify individual immune response based on a recombination la
 ## Contact
 
 This software was developed by [Igor Mandric](https://github.com/mandricigor) and [Serghei Mangul](https://sergheimangul.wordpress.com/). Please do not hesitate to contact us (imandric1@student.gsu.edu, smangul@ucla.edu) if you have any comments, suggestions, or clarification requests regarding the tutorial or if you would like to contribute to this resource.
+
+
+## Publication
+
+Mangul, Serghei and Mandric Igor, et al., “Profiling adaptive immune repertoires across multiple human tissues by RNA Sequencing“, bioRxiv (2016)
+
+## Presentations
+
+Talk at PSB 2017 workshop on Open Data for Discovery Science  are available here : https://sergheimangul.files.wordpress.com/2017/01/psb2017_public1.pdf 
