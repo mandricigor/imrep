@@ -9,10 +9,14 @@ ImReP is a computational method for rapid and accurate profiling of the adaptive
 
 ImReP is able to quantify individual immune response based on a recombination landscape of genes encoding B and T cell receptors (BCR and TCR).  ImReP is able to efficiently extract TCR- and BCR- derived reads from the RNA-Seq data and accurately assemble clonotypes (defined as clones with identical CDR3 amino acid sequences)  and detect corresponding V(D)J recombinations.Using CAST clustering technique, ImReP is able to correct assembled clonotypes for PCR and sequencing errors.
 
+![ImreP](https://github.com/mandricigor/imrep/blob/master/png/imrepOverview.png)
+
 
 
 # Tutorial 
 ImReP tutorial is available at https://github.com/mandricigor/imrep/wiki
+
+
 
 
 
