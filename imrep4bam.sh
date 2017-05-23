@@ -79,6 +79,11 @@ ${DIR}/tools/samtools view -bh ${bam} ${chr}22:22026076-22922913 | samtools view
 ${DIR}/tools/samtools view -bh ${bam} ${chr}14:21621904-22552132 | samtools view -bh -F 4 - | samtools bam2fq -  >>${out}/${basename}_mapped_immune.fastq
 ${DIR}/tools/samtools view -bh ${bam} ${chr}7:142299011-1428132872 | samtools view -bh -F 4 - | samtools bam2fq -    >>${out}/${basename}_mapped_immune.fastq
 ${DIR}/tools/samtools view -bh ${bam} ${chr}7:38240024-38368055 | samtools view -bh -F 4 - | samtools bam2fq - >>${out}/${basename}_mapped_immune.fastq
+
+n=$(wc -l ${out}/${basename}_mapped_immune.fastq | awk '{print $1/4}')
+
+echo "Number of reads extracted from BCR and TCR loci : "$n
+
 fi
 
 
