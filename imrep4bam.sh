@@ -10,9 +10,7 @@ help='species (human or mouse, default human)')
 parser.add_argument('-r', '--release', default='hg19', type=str,
 help='For human we support hg19 (default) and hg38. For mouse we support only mm10 (default)')
 parser.add_argument('-chr', '--chr', default='', type=str,
-help='Please use this option in case chromosome name has string chr in it. For example chr1. By default it is assumed that chromosome names are provided as number (for example 1,2,3,..,X,Y,MT)')
-
-
+help='Use this option to specify the format of chromosome name in the bam file. By default it is : 1,2,3,...,X. In case the format is : chr1, chr2,..,chrX, use : -chr chr)')
 EOF
 
 
@@ -29,6 +27,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 chr=${CHR[@]}
 
 mkdir $basename
+
+samtools=${DIR}/ext/samtools
 
 #--------------------------------------------------------------------------------------
 #UNMAPPED READS
