@@ -4,7 +4,7 @@ source $(dirname $0)/argparse.bash || exit 1
 argparse "$@" <<EOF || exit 1
 
 parser.add_argument('bam',help='bam with mapped and unmapped reads, BAM file needs to be indexed')
-parser.add_argument('output_clones', help='output file with CDR3 clonotypes')
+parser.add_argument('basenameput_clones', help='basenameput file with CDR3 clonotypes')
 
 parser.add_argument('-s', '--species', default='human', type=str,
 help='species (human or mouse, default human)')
@@ -19,7 +19,7 @@ EOF
 
 #echo ${SPECIES[@]}
 #echo required infile: $BAM
-#echo required outfile: $OUTPUT_CLONES
+#echo required basenamefile: $basenamePUT_CLONES
 
 
 
@@ -43,7 +43,7 @@ samtools view -f 0x4 -bh  $bam | samtools bam2fq - > ${basename}/${basename}_unm
 #extract reads from IGK chr2, 88857361..90235368
 #extract reads from IGL chr22, 22026076..22922913
 #extract reads from TCRA chr14, 21621904..22552132
-#extract reads from TCRB chr7, 142299011..142813287
+#extract reads from TCRB chr7, 142299011..142813287basename
 # reads from TCRD inside TCRA
 # #extract reads from TCRG chr7, 38240024..38368055
 
@@ -61,26 +61,26 @@ then
 echo "-----Release hg19"
 
 
-samtools view -bh ${bam} ${chr}14:106032614-107288051 | samtools view -bh -F 4 - | samtools bam2fq - >${out}/${basename}_mapped_immune.fastq
-samtools view -bh ${bam} ${chr}2:89156874-89630436 | samtools view -bh -F 4 - | samtools bam2fq -  >>${out}/${basename}_mapped_immune.fastq
-samtools view -bh ${bam} ${chr}22:22380474-23265085 | samtools view -bh -F 4 - | samtools bam2fq -  >>${out}/${basename}_mapped_immune.fastq
-samtools view -bh ${bam} ${chr}14:22090057-23021075 | samtools view -bh -F 4 - | samtools bam2fq -  >>${out}/${basename}_mapped_immune.fastq
-samtools view -bh ${bam} ${chr}7:141998851-142510972 | samtools view -bh -F 4 - | samtools bam2fq -    >>${out}/${basename}_mapped_immune.fastq
-samtools view -bh ${bam} ${chr}7:38279625-38407656 | samtools view -bh -F 4 - | samtools bam2fq - >>${out}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}14:106032614-107288051 | samtools view -bh -F 4 - | samtools bam2fq - >${basename}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}2:89156874-89630436 | samtools view -bh -F 4 - | samtools bam2fq -  >>${basename}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}22:22380474-23265085 | samtools view -bh -F 4 - | samtools bam2fq -  >>${basename}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}14:22090057-23021075 | samtools view -bh -F 4 - | samtools bam2fq -  >>${basename}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}7:141998851-142510972 | samtools view -bh -F 4 - | samtools bam2fq -    >>${basename}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}7:38279625-38407656 | samtools view -bh -F 4 - | samtools bam2fq - >>${basename}/${basename}_mapped_immune.fastq
 fi
 
 if [ ${RELEASE[@]} == "hg38" ]
 then
 echo "-----Release hg38"
 
-samtools view -bh ${bam} ${chr}14:105586437-106879844 | samtools view -bh -F 4 - | samtools bam2fq - >${out}/${basename}_mapped_immune.fastq
-samtools view -bh ${bam} ${chr}2:88857361-90235368 | samtools view -bh -F 4 - | samtools bam2fq -  >>${out}/${basename}_mapped_immune.fastq
-samtools view -bh ${bam} ${chr}22:22026076-22922913 | samtools view -bh -F 4 - | samtools bam2fq -  >>${out}/${basename}_mapped_immune.fastq
-samtools view -bh ${bam} ${chr}14:21621904-22552132 | samtools view -bh -F 4 - | samtools bam2fq -  >>${out}/${basename}_mapped_immune.fastq
-samtools view -bh ${bam} ${chr}7:142299011-1428132872 | samtools view -bh -F 4 - | samtools bam2fq -    >>${out}/${basename}_mapped_immune.fastq
-samtools view -bh ${bam} ${chr}7:38240024-38368055 | samtools view -bh -F 4 - | samtools bam2fq - >>${out}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}14:105586437-106879844 | samtools view -bh -F 4 - | samtools bam2fq - >${basename}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}2:88857361-90235368 | samtools view -bh -F 4 - | samtools bam2fq -  >>${basename}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}22:22026076-22922913 | samtools view -bh -F 4 - | samtools bam2fq -  >>${basename}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}14:21621904-22552132 | samtools view -bh -F 4 - | samtools bam2fq -  >>${basename}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}7:142299011-1428132872 | samtools view -bh -F 4 - | samtools bam2fq -    >>${basename}/${basename}_mapped_immune.fastq
+samtools view -bh ${bam} ${chr}7:38240024-38368055 | samtools view -bh -F 4 - | samtools bam2fq - >>${basename}/${basename}_mapped_immune.fastq
 
-n=$(wc -l ${out}/${basename}_mapped_immune.fastq | awk '{print $1/4}')
+n=$(wc -l ${basename}/${basename}_mapped_immune.fastq | awk '{print $1/4}')
 
 echo "Number of reads extracted from BCR and TCR loci : "$n
 
