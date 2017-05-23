@@ -27,6 +27,7 @@ bam=$BAM
 
 basename=$(echo  ${bam##*/} | awk -F ".bam" '{print $1}')
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+chr=${CHR[@]}
 
 mkdir $basename
 
