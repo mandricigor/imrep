@@ -4,7 +4,6 @@ source $(dirname $0)/argparse.bash || exit 1
 argparse "$@" <<EOF || exit 1
 
 parser.add_argument('bam',help='bam with mapped and unmapped reads, BAM file needs to be indexed')
-parser.add_argument('basenameput_clones', help='basenameput file with CDR3 clonotypes')
 
 parser.add_argument('-s', '--species', default='human', type=str,
 help='species (human or mouse, default human)')
