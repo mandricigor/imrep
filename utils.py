@@ -51,9 +51,8 @@ def nucleotide2protein2(inString):
     frs = [1, 2, 3, -1, -2, -3]
 
     for f, frame in zip(framesTemp, frs):
-        if "_" not in f and "*" not in f:
-            processedRead=f.replace(' ','')
-            frames.append((processedRead, frame))
+        processedRead=f.replace(' ','')
+        frames.append((processedRead, frame))
     return frames
 
 
@@ -71,6 +70,19 @@ def dumpClones2(clones, outFile):
         for clone in clones:
             f.write(clone)
 
+
+def dumpClones3(clones, outFile):
+    header_line = "CDR3_AA_Seq\tChain_type\tRead_count\tV_chains\tD_chains\tJ_chains\n"
+    clones_in_frame = [clone for clone in clones if "*" not in clone]
+    clones_out_frame = [clone for clone in clones if "*" in clone]
+    with open(outFile, "w") as f:
+        f.write(header_line)
+        for clone in clones_in_frame:
+            f.write(clone)
+    with open(outFile + ".out_of_frame", "w") as f:
+        f.write(header_line)
+        for clone in clones_out_frame:
+            f.write(clone)
 
 
 def getGeneType(geneName):

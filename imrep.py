@@ -65,7 +65,8 @@ class ImReP(object):
         self.__populate_j()
         self.__read_reads()
         self.debug_info = {}
-        self.clonotype_CDR3_count_dict = {}
+        self.clonotype_CDR3_count_dict_in_frame = {}
+        self.clonotype_CDR3_count_dict_out_frame = {}
         self.read_names = {}
 
     def kmers(self, string, k):
@@ -516,7 +517,8 @@ class ImReP(object):
             clustered = [cclone for cclone in clustered if cclone[1] > 1] # filter out garbage
             for cl in clustered:
                 cl.append(chtype)
-            self.clonotype_CDR3_count_dict[chtype] = len(clustered)
+            self.clonotype_CDR3_count_dict_in_frame[chtype] = len([x for x in clustered if "*" not in x[0]])
+            self.clonotype_CDR3_count_dict_out_frame[chtype] = len([x for x in clustered if "*" in x[0]])
             clustered_clones.extend(clustered)
         self.clone_dict = {}
         for clone in clustered_clones:
@@ -544,7 +546,7 @@ if __name__ == "__main__":
 
     necessary_arguments = ap.add_argument_group("Necessary Inputs")
     necessary_arguments.add_argument("reads_file", help="unmapped reads in .fasta (default) or .fastq (if flag --fastq is set)  format")
-    necessary_arguments.add_argument("output_clones", help="output file with CDR3 clonotypes")
+    necessary_arguments.add_argument("output_clones", help="output file with (in-frame) CDR3 clonotypes (the out-frame CDR3 clonotypes are written to ${output_clones}.out_of_frame file")
 
     optional_arguments = ap.add_argument_group("Optional Inputs")
     optional_arguments.add_argument("--fastq", help="a binary flag used to indicate that the input file with unmapped reads is in fastq format", dest="isFastq", action="store_true")
@@ -772,16 +774,20 @@ if __name__ == "__main__":
     print "%s partial-V CDR3 found" % len(imrep.just_v_dict)
     print "%s partial-J CDR3 found" % len(imrep.just_j_dict)
     if len(final_clones):
-        print "%s full CDR3 found:" % len(final_clones)
+        print "%s full in-frame CDR3 found:" % len([x for x in final_clones if "*" not in x])
         for x in ['IGH','IGK','IGL','TRA','TRB','TRD','TRG']:
-            y = imrep.clonotype_CDR3_count_dict.get(x, 0)
+            y = imrep.clonotype_CDR3_count_dict_in_frame.get(x, 0)
+            print "\t- %s of type %s" % (y, x)
+        print "%s full out-frame CDR3 found:" % len([x for x in final_clones if "*" in x])
+        for x in ['IGH','IGK','IGL','TRA','TRB','TRD','TRG']:
+            y = imrep.clonotype_CDR3_count_dict_out_frame.get(x, 0)
             print "\t- %s of type %s" % (y, x)
     else:
         print "No full CDR3 found"
     clones = []
     for x, y in final_clones.items():
         clones.append(x % y)
-    dumpClones2(clones, outFile)
+    dumpClones3(clones, outFile)
     print "Done. Bye-bye"
 
 
