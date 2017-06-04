@@ -511,8 +511,13 @@ class ImReP(object):
             clones_by_type[chtype][cdr3] = count
         clustered_clones = []
         for chtype, clones in clones_by_type.items():
-            cast_clustering = Cast(clones)
-            clustered = cast_clustering.doCast(self.__settings.castThreshold[chtype])
+            if self.__settings.noCast:
+                clustered = []
+                for clone, count in clones.items():
+                    clustered.append([clone, count, [clone]])
+            else: # execute CAST clustering
+                cast_clustering = Cast(clones)
+                clustered = cast_clustering.doCast(self.__settings.castThreshold[chtype])
             clustered = [cclone for cclone in clustered if cclone[1] > 1] # filter out garbage
             for cl in clustered:
                 cl.append(chtype)
@@ -553,6 +558,7 @@ if __name__ == "__main__":
     optional_arguments.add_argument("--noOverlapStep", help="a binary flag used in case if the user does not want to run the second stage of the ImReP assembly.", dest="noOverlapStep", action="store_true")
     optional_arguments.add_argument("--extendedOutput", help="extended output: write information read by read", dest="extendedOutput", action="store_true")
     optional_arguments.add_argument("-c", "--chains", help="chains: comma separated values from IGH,IGK,IGL,TRA,TRB,TRD,TRG", type=str)
+    optional_arguments.add_argument("--noCast", help="specify this option if you want to disable CDR3 clustering", dest="noCast", action="store_true")
 
     advanced_arguments = ap.add_argument_group("Advanced Inputs")
     advanced_arguments.add_argument("--minOverlap1", help="minimal overlap between the reads and A) the left part of V gene (before C amino acid) and B) the right part of J gene (after W for IGH and F for all other chains), default is 4", type=int)
@@ -582,6 +588,7 @@ if __name__ == "__main__":
         'overlapLen': 5,
         'noOverlapStep': False,
         'extendedOutput': False,
+        'noCast': False, # this means that CAST is run by default
         'castThreshold': {'IGH': 0.2, 'IGK': 0.2, 'IGL': 0.2, 'TRA': 0.3, 'TRB': 0.2, 'TRD': 0.2, 'TRG': 0.2},
         'chains': ['IGH','IGK','IGL','TRA','TRB','TRD','TRG'],
         'minlen1': 2,
@@ -603,6 +610,8 @@ if __name__ == "__main__":
         set_dict["isFastq"] = args.isFastq
     if args.extendedOutput is not None:
         set_dict["extendedOutput"] = args.extendedOutput
+    if args.noCast is not None:
+        set_dict["noCast"] = args.noCast
     if args.chains:
         set_dict["chains"] = args.chains.split(",")
     if args.minOverlap1:
