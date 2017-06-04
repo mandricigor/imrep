@@ -1,8 +1,8 @@
 
 
 info = {
-    "contributors": ["Igor Mandric"],
-    "release": 0.4,
+    "contributors": ["Igor Mandric", "Serghei Mangul"],
+    "release": 0.5,
     "hello": """
 
  _                          
