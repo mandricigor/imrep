@@ -2,6 +2,7 @@ import sys
 import argparse
 import os
 import os
+import re
 from collections import Counter
 import gzip
 
@@ -47,9 +48,9 @@ class ImReP(object):
         self.__settings = settings
         self._fastq_handle = None
 
-        self.vi_pieces = {}
+        self.vi_pieces = {"aa": {}, "nt": {}}
         self.d_seqs = {}
-        self.jay_pieces = {}
+        self.jay_pieces = {"aa": {}, "nt": {}}
         self.pSeq_read_map = {}
         self.just_v = []
         self.just_j = []
@@ -78,53 +79,65 @@ class ImReP(object):
 
     def __populate_v(self):
         global cd
-        chains_v = map(lambda x: cd + "/db/%s/%sV.faa" % (self.__settings.species, x), self.__settings.chains)
-        for ch_v_file in chains_v:
-            for record in SeqIO.parse(ch_v_file, "fasta"):
-                if "partial in 3'" not in record.description:
-                    Vend = str(record.seq)[-20:]
+        chains_v = self.__settings.chains
+        for chain in chains_v:
+            ch_v_file_nt = cd + "/db/%s/nt/%sV.fna" % (self.__settings.species, chain)
+            ch_v_file_aa = cd + "/db/%s/aa/%sV.faa" % (self.__settings.species, chain)
+            for record_nt, record_aa in zip(SeqIO.parse(ch_v_file_nt, "fasta"), SeqIO.parse(ch_v_file_aa, "fasta")):
+                if "partial in 3'" not in record_aa.description:
+                    Vend = str(record_nt.seq)[-60:].upper()
                     kmrs = self.kmers(Vend, kmer_len)
                     for k in kmrs:
                         if k not in self.hashV:
                             self.hashV[k] = set()
-                        self.hashV[k].add(record.id)
-                    self.v_chain_type[record.id] = getGeneType2(record.id)
-                    posC = Vend.rfind("C")
-                    if posC != -1:
+                        self.hashV[k].add(record_nt.id)
+                    self.v_chain_type[record_nt.id] = getGeneType2(record_nt.id)
+                    posC = [Vend.rfind("TGT"), Vend.rfind("TGC")]
+                    if posC != [-1, -1]:
+                        posC = max(posC)
                         anchor = Vend[:posC]
                         rest = Vend[posC + 1:]
-                        self.vi_pieces[record.id] = (anchor, rest)
+                        self.vi_pieces["nt"][record_nt.id] = (anchor, rest)
+
 
     def __populate_d(self):
         global cd
         for chain in self.__settings.chains:
             if chain in ["IGH", "TRB", "TRD"]:
-                for record in SeqIO.parse(cd + "/db/%s/%sD.faa" % (self.__settings.species, chain), "fasta"):
+                ch_d_file_nt = cd + "/db/%s/nt/%sD.fna" % (self.__settings.species, chain)
+                ch_d_file_aa = cd + "/db/%s/aa/%sD.faa" % (self.__settings.species, chain)
+                for record_nt, record_aa in zip(SeqIO.parse(ch_d_file_nt, "fasta"), SeqIO.parse(ch_d_file_aa, "fasta")):
                     if chain not in self.d_seqs:
                         self.d_seqs[chain] = {}
-                    self.d_seqs[chain][record.id] = str(record.seq)
+                    self.d_seqs[chain][record_aa.id] = str(record_aa.seq)
 
 
     def __populate_j(self):
         global cd
-        chains_j = map(lambda x: cd + "/db/%s/%sJ.faa" % (self.__settings.species, x), self.__settings.chains)
-        for ch_j_file in chains_j:
-            for record in SeqIO.parse(ch_j_file, "fasta"):
-                beginJ = str(record.seq)[:20]
+        chains_j = self.__settings.chains
+        for chain in chains_j:
+            ch_j_file_nt = cd + "/db/%s/nt/%sJ.fna" % (self.__settings.species, chain)
+            ch_j_file_aa = cd + "/db/%s/aa/%sJ.faa" % (self.__settings.species, chain)
+            for record_nt, record_aa in zip(SeqIO.parse(ch_j_file_nt, "fasta"), SeqIO.parse(ch_j_file_aa, "fasta")):
+                beginJ = str(record_nt.seq)[:60].upper()
                 kmrs = self.kmers(beginJ, kmer_len)
                 for k in kmrs:
                     if k not in self.hashJ:
                         self.hashJ[k] = set()
-                    self.hashJ[k].add(record.id)
-                self.j_chain_type[record.id] = getGeneType2(record.id)
+                    self.hashJ[k].add(record_nt.id)
+                self.j_chain_type[record_nt.id] = getGeneType2(record_nt.id)
                 letter = "F"
-                if "IGHJ" in ch_j_file:
+                if "IGHJ" in ch_j_file_aa:
                     letter = "W"
-                posW = beginJ.find(letter)
-                if posW != -1:
+                if letter == "F":
+                    posW = [beginJ.find("TTT"), beginJ.find("TTC")]
+                else:
+                    posW = [beginJ.find("TGG"), beginJ.find("TGG")]
+                if posW != [-1, -1]:
+                    posW = min(posW)
                     anchor = beginJ[:posW]
                     rest = beginJ[posW + 1:]
-                    self.jay_pieces[record.id] = (anchor, rest)
+                    self.jay_pieces["nt"][record_aa.id] = (anchor, rest)
 
 
 
@@ -174,11 +187,13 @@ class ImReP(object):
                 self.read_names[record.id] = count_existing + 1
                 
             self.debug_info[record.id] = {}
-            pSequences = nucleotide2protein2(str(record.seq))
+            pSequences = nucleotides(str(record.seq))
             if pSequences:
-                for pSeq, frame in pSequences:
-                    pos1 = [pSeq.rfind("C"), pSeq.find("C")]
-                    pos2 = [pSeq.rfind("FG"), pSeq.rfind("WG")]
+                for pSeq in pSequences:
+                    #pos1 = [pSeq.rfind("C"), pSeq.find("C")]
+                    #pos2 = [pSeq.rfind("FG"), pSeq.rfind("WG")]
+                    pos1 = [max(pSeq.rfind("TGT"), pSeq.rfind("TGC")), min(pSeq.find("TGT"), pSeq.find("TGC"))]
+                    pos2 = [max(pSeq.rfind("TTTGG"), pSeq.rfind("TTCGG")), pSeq.rfind("TGGGG")]
                     v_overlap = "NA"
                     j_overlap = "NA"
                     vtypes = {}
@@ -204,9 +219,9 @@ class ImReP(object):
                             v_overlap = len(f) + len(s) + 1
                             for v1, v2 in v_cl.items():
                                 for v3 in v2:
-                                    if v3 not in self.vi_pieces:
+                                    if v3 not in self.vi_pieces["nt"]:
                                         continue
-                                    v, vv = self.vi_pieces[v3]
+                                    v, vv = self.vi_pieces["nt"][v3]
                                     minlen1 = min(len(f), len(v))
                                     minlen2 = min(len(s), len(vv))
                                     if minlen1 > 0:
@@ -241,9 +256,9 @@ class ImReP(object):
                             v_overlap = len(f) + len(s) + 1
                             for v1, v2 in v_cl.items():
                                 for v3 in v2:
-                                    if v3 not in self.vi_pieces:
+                                    if v3 not in self.vi_pieces["nt"]:
                                         continue
-                                    v, vv = self.vi_pieces[v3]
+                                    v, vv = self.vi_pieces["nt"][v3]
                                     minlen1 = min(len(f), len(v))
                                     minlen2 = min(len(s), len(vv))
                                     if minlen1 > 0:
@@ -284,9 +299,9 @@ class ImReP(object):
                                 j_overlap = len(f) + len(s) + 1
                                 for j1, j2 in j_cl.items():
                                     for j3 in j2:
-                                        if j3 not in self.jay_pieces:
+                                        if j3 not in self.jay_pieces["nt"]:
                                             continue
-                                        j, jj = self.jay_pieces[j3]
+                                        j, jj = self.jay_pieces["nt"][j3]
                                         minlen1 = min(len(f), len(j))
                                         minlen2 = min(len(s), len(jj))
                                         if minlen2 > 0:
@@ -323,9 +338,9 @@ class ImReP(object):
                             j_overlap = len(f) + len(s) + 1
                             for j1, j2 in j_cl.items():
                                 for j3 in j2:
-                                    if j3 not in self.jay_pieces:
+                                    if j3 not in self.jay_pieces["nt"]:
                                         continue
-                                    j, jj = self.jay_pieces[j3]
+                                    j, jj = self.jay_pieces["nt"][j3]
                                     minlen1 = min(len(f), len(j))
                                     minlen2 = min(len(s), len(jj))
                                     if minlen2 > 0:

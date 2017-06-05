@@ -57,6 +57,37 @@ def nucleotide2protein2(inString):
     return frames
 
 
+def nucleotide2protein3(inString):
+    frames = []
+    framesTemp = []
+    nucs = []
+
+    framesTemp.append(translate_frameshifted(inString[0:]))  # first frame
+    framesTemp.append(translate_frameshifted(inString[1:]))  # second frame
+    framesTemp.append(translate_frameshifted(inString[2:]))  # third frame
+    framesTemp.append(translate_frameshifted(reverse_complement(inString)))  # negative first frame
+    framesTemp.append(translate_frameshifted(reverse_complement(inString)[1:]))  # negative second frame
+    framesTemp.append(translate_frameshifted(reverse_complement(inString)[2:]))  # negative third frame
+
+    nucs.append(inString)
+    nucs.append(inString)
+    nucs.append(inString)
+    nucs.append(reverse_complement(inString))
+    nucs.append(reverse_complement(inString))
+    nucs.append(reverse_complement(inString))
+
+    frs = [1, 2, 3, -1, -2, -3]
+
+    for f, frame, nuc in zip(framesTemp, frs, nucs):
+        if "_" not in f and "*" not in f:
+            processedRead=f.replace(' ','')
+            frames.append((processedRead, frame, nuc))
+    return frames
+
+
+def nucleotides(sequence):
+    return [sequence, reverse_complement(sequence)]
+
 
 def dumpClones(clones, outFile):
     with open(outFile, "w") as f:
