@@ -117,9 +117,9 @@ class ImReP(object):
                         self.hashJ[k] = set()
                     self.hashJ[k].add(record.id)
                 self.j_chain_type[record.id] = getGeneType2(record.id)
-                letter = "F"
+                letter = "FG"
                 if "IGHJ" in ch_j_file:
-                    letter = "W"
+                    letter = "WG"
                 posW = beginJ.find(letter)
                 if posW != -1:
                     anchor = beginJ[:posW]
@@ -177,7 +177,7 @@ class ImReP(object):
             pSequences = nucleotide2protein2(str(record.seq))
             if pSequences:
                 for pSeq, frame in pSequences:
-                    pos1 = [pSeq.rfind("C"), pSeq.find("C")]
+                    pos1 = [pSeq.find("C"), pSeq.find("C")]
                     pos2 = [pSeq.rfind("FG"), pSeq.rfind("WG")]
                     v_overlap = "NA"
                     j_overlap = "NA"
