@@ -44,7 +44,7 @@ To get the latest version, use
 ```
 github clone https://github.com/mandricigor/imrep.git
 ```
-Releases are availabe here 
+Information about releases is availabe here 
 https://github.com/mandricigor/imrep/releases
 
 
