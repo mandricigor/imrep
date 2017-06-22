@@ -2,7 +2,7 @@
 
 info = {
     "contributors": ["Igor Mandric", "Serghei Mangul"],
-    "release": 0.5,
+    "release": "0.5.2",
     "hello": """
 
  _                          
