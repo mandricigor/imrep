@@ -42,7 +42,7 @@ Using ImReP we have created the Atlas of Immunoglobilin Repertoires (TheAIR). Th
 
 To get the latest version, use 
 ```
-github clone https://github.com/mandricigor/imrep.git
+git clone https://github.com/mandricigor/imrep.git
 ```
 Information about releases is availabe here 
 https://github.com/mandricigor/imrep/releases
