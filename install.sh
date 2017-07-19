@@ -1,4 +1,4 @@
-pip install pysam
+pip install pysam --user
 pip install biopython --user
 pip install intervaltree --user
 pip install jellyfish --user
