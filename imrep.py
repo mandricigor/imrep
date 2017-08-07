@@ -4,6 +4,8 @@ import os
 import os
 from collections import Counter
 import gzip
+import pysam
+
 
 try:
     from StringIO import StringIO # Python 2
@@ -28,6 +30,289 @@ import info
 cd = os.path.dirname(os.path.realpath(__file__))
 
 kmer_len = 3
+
+
+
+#added by Serghei
+
+def extract_unmapped_digGold(file, mSet):
+    k=0
+
+    fastq_parser = SeqIO.parse(args.allReads, "fastq")
+    for record in fastq_parser:
+        if record.id not in mReads:
+            file.write(">"+str(record.id))
+            file.write("\n")
+            file.write(str(record.seq))
+            file.write("\n")
+            k+=1
+    print "Number of unmapped reads extracted",k
+
+def extract_unmapped(file):
+    k=0
+    samfile = pysam.AlignmentFile(args.reads_file, "rb")
+    for read in samfile.fetch(until_eof=True):
+        if read.is_unmapped:
+            k+=1
+            file.write(">"+str(read.query_name))
+            file.write("\n")
+            file.write(str(read.query_sequence))
+            file.write("\n")
+    print "Number of unmapped reads extracted",k
+    samfile.close()
+
+
+
+
+def extract_mapped(tag,file,k):
+    samfile = pysam.AlignmentFile(args.reads_file, "rb")
+    
+    if tag=="IGH":
+        
+       
+       
+    
+        if  not args.species:
+            if args.is_chrFormat2:
+                chr="chr14"
+            else:
+                chr="14"
+            if args.is_hg38:
+                x=105586437
+                y=106879844
+            else:
+                x=106032614
+                y=107288051
+        elif  args.species=="mouse":
+            if args.is_chrFormat2:
+                chr="chr12"
+            else:
+                chr="12"
+            x=113258768
+            y=116009954
+
+
+
+    
+        for read in samfile.fetch(chr,x,y):
+            rl=read.infer_query_length()
+            c=read.cigartuples
+            if c: # to avoid CIGAR of type None
+                if len(c)==1:
+                    type=read.cigartuples[0][0]
+                    length=read.cigartuples[0][1]
+                    if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
+                        k+=1
+                        file.write(">"+str(read.query_name))
+                        file.write("\n")
+                        file.write(str(read.query_sequence))
+                        file.write("\n")
+
+    elif tag=="IGK":
+        
+        
+        if  not args.species:
+            if args.is_chrFormat2:
+                chr="chr2"
+            else:
+                chr="2"
+            if args.is_hg38:
+                x=88857361
+                y=90235368
+            else:
+                x=89156874
+                y=89630436
+        elif  args.species=="mouse":
+            if args.is_chrFormat2:
+                chr="chr6"
+            else:
+                chr="6"
+            x=67555636
+            y=70726754
+
+        
+        for read in samfile.fetch(chr,x,y):
+            rl=read.infer_query_length()
+            c=read.cigartuples
+            if c:
+                if len(c)==1:
+                    type=read.cigartuples[0][0]
+                    length=read.cigartuples[0][1]
+                    if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
+                        k+=1
+                        file.write(">"+str(read.query_name))
+                        file.write("\n")
+                        file.write(str(read.query_sequence))
+                        file.write("\n")
+
+
+    elif tag=="IGL":
+        
+        
+        
+        if  not args.species:
+            if args.is_chrFormat2:
+                chr="chr22"
+            else:
+                chr="22"
+            if args.is_hg38:
+                x=22026076
+                y=22922913
+            else:
+                x=22380474
+                y=23265085
+        elif  args.species=="mouse":
+            if args.is_chrFormat2:
+                chr="chr16"
+            else:
+                chr="16"
+            x=19026858
+            y=19260844
+
+
+
+
+
+
+
+        for read in samfile.fetch(chr,x,y):
+            rl=read.infer_query_length()
+            c=read.cigartuples
+            if c:
+                if len(c)==1:
+                    type=read.cigartuples[0][0]
+                    length=read.cigartuples[0][1]
+                    if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
+                        k+=1
+                        file.write(">"+str(read.query_name))
+                        file.write("\n")
+                        file.write(str(read.query_sequence))
+                        file.write("\n")
+
+
+    elif tag=="TRA":
+        
+        
+        
+        if  not args.species:
+            if args.is_chrFormat2:
+                chr="chr14"
+            else:
+                chr="14"
+            if args.is_hg38:
+                x=21621904
+                y=22552132
+            else:
+                x=22090057
+                y=23021075
+        elif  args.species=="mouse":
+            if args.is_chrFormat2:
+                chr="chr14"
+            else:
+                chr="14"
+            x=52427967
+            y=54224198
+    
+    
+    
+
+    
+            
+        for read in samfile.fetch(chr,x,y):
+            rl=read.infer_query_length()
+            c=read.cigartuples
+            if c:
+                if len(c)==1:
+                    type=read.cigartuples[0][0]
+                    length=read.cigartuples[0][1]
+                    if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
+                        k+=1
+                        file.write(">"+str(read.query_name))
+                        file.write("\n")
+                        file.write(str(read.query_sequence))
+                        file.write("\n")
+
+    elif tag=="TRB":
+        
+        
+        if  not args.species:
+            if args.is_chrFormat2:
+                chr="chr7"
+            else:
+                chr="7"
+            if args.is_hg38:
+                x=142299011
+                y=142813287
+            else:
+                x=141998851
+                y=141998851
+        elif  args.species=="mouse":
+            if args.is_chrFormat2:
+                chr="chr6"
+            else:
+                chr="6"
+            x=40891296
+            y=41558371
+
+
+        for read in samfile.fetch(chr,x,y):
+            rl=read.infer_query_length()
+            c=read.cigartuples
+            if c:
+                if len(c)==1:
+                    type=read.cigartuples[0][0]
+                    length=read.cigartuples[0][1]
+                    if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
+                        k+=1
+                        file.write(">"+str(read.query_name))
+                        file.write("\n")
+                        file.write(str(read.query_sequence))
+                        file.write("\n")
+    elif tag=="TRG":
+        
+        
+        if  not args.species:
+            if args.is_chrFormat2:
+                chr="chr7"
+            else:
+                chr="7"
+            if args.is_hg38:
+                x=38240024
+                y=38368055
+            else:
+                x=38279625
+                y=38407656
+        elif  args.species=="mouse":
+            if args.is_chrFormat2:
+                chr="chr3"
+            else:
+                chr="3"
+            x=19178042
+            y=19356476
+    
+    
+
+            
+        for read in samfile.fetch(chr,x,y):
+            rl=read.infer_query_length()
+            c=read.cigartuples
+            if c:
+                if len(c)==1:
+                    type=read.cigartuples[0][0]
+                    length=read.cigartuples[0][1]
+                    if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
+                        k+=1
+                        file.write(">"+str(read.query_name))
+                        file.write("\n")
+                        file.write(str(read.query_sequence))
+                        file.write("\n")
+
+
+
+    samfile.close()
+
+#finish Serghei
+
 
 class Settings(object):
     def __init__(self, **kwargs):
@@ -128,9 +413,20 @@ class ImReP(object):
 
 
 
+
+
+
     def __read_reads(self):
+        
+        
+        
         fastqfile = self.__settings.fastqfile
+        
+        
+        
         formatFile = "fasta"
+        
+        
         if self.__settings.isFastq:
             formatFile = "fastq"
         if fastqfile.endswith(".gz"):
@@ -154,9 +450,22 @@ class ImReP(object):
                     raise Exception("Are you sure the file %s is a .fastq file?" % fastqfile)
             else:
                 raise Exception("Unrecognized file format: %s!!!" % fastqfile)
+                    
+        
+                        
+                        
+        
+        
+
+
+
+
 
 
     def __full_cdr3(self):
+        
+
+        
         if not self._fastq_handle:
             return []
         vkeys = set(self.hashV.keys())
@@ -548,11 +857,22 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser("python2 imrep.py")
 
     necessary_arguments = ap.add_argument_group("Necessary Inputs")
-    necessary_arguments.add_argument("reads_file", help="unmapped reads in .fasta (default) or .fastq (if flag --fastq is set)  format")
+    necessary_arguments.add_argument("reads_file", help="unmapped reads in .fasta (default) or .fastq (if flag --fastq is set) or .bam (if --bam or --digGold is set)")
     necessary_arguments.add_argument("output_clones", help="output file with CDR3 clonotypes")
 
     optional_arguments = ap.add_argument_group("Optional Inputs")
     optional_arguments.add_argument("--fastq", help="a binary flag used to indicate that the input file with unmapped reads is in fastq format", dest="isFastq", action="store_true")
+    optional_arguments.add_argument("--bam", help="a binary flag used to indicate that the input file is a BAM file mapped and  unmapped reads", dest="isBAM", action="store_true")
+    optional_arguments.add_argument("--chrFormat2", help="a binary flag used to indicate that the format of chromosome name in the bam file is in this format : chr1, chr2,..,chrX. This options is only compatible with --bam option. By default we asssume chromosmes names are indicated only by numbers :1,2,3,...,X", dest="is_chrFormat2", action="store_true")
+    
+    
+    optional_arguments.add_argument("--hg38", help="a binary flag used to indicate that reads were mapped to hg38 rellease. The default is hg19. For mouse we support only mm10 (default). ", dest="is_hg38", action="store_true")
+    optional_arguments.add_argument("-a", "--allReads", help="Original raw reads (all reads). Needs to be used with --digGold option", type=str, dest="allReads")
+
+
+    optional_arguments.add_argument("--digGold", help="a binary flag used to indicate that the input file is FASTQ file with original raw reads (all reads). And unmapped reads needs to be extracted from the raw reads ( original raw reads are provided using --reads_file option). Use this option only if unmapped reads were not saved. Needs to be used with -m option", dest="is_digGold", action="store_true")
+
+    
     optional_arguments.add_argument("-s", "--species", help="species (human or mouse, default human)", type=str, dest="species")
     optional_arguments.add_argument("-o", "--overlapLen", help="the minimal length to consider between reads overlapping with a V gene and reads overlapping with a J gene. Default value is 5 amino acids.", type=int)
     optional_arguments.add_argument("--noOverlapStep", help="a binary flag used in case if the user does not want to run the second stage of the ImReP assembly.", dest="noOverlapStep", action="store_true")
@@ -567,20 +887,87 @@ if __name__ == "__main__":
     advanced_arguments.add_argument("--misMatch1", help="maximal number of mismatches between the reads and A) the left part of V gene (before C amino acid) and B) the right part of J gene (after W for IGH and F for all other chains), default is 2", type=int)
     advanced_arguments.add_argument("--misMatch2", help="maximal number of mismatches between the reads and A) the right part of V gene (after C amino acid) and B) the left part of J gene (before W for IGH and F for all other chains), default is 2", type=int)
    
+   
+
 
     args = ap.parse_args()
+    
+    
+    #Check compatibility of options
+    if args.is_hg38 and args.species=="mouse":
+        print "::::::ERROR. Options --hg38 and -s mouse are not compatible. Please keep only one of those options."
+        print "Exit!"
+        sys.exit(1)
+    
+    if args.isBAM and args.is_digGold:
+        print "::::::ERROR. Options --bam and --digGold are not compatible. Please keep only one of those options."
+        sys.exit(1)
 
-    fastqfile = args.reads_file
-    isFastq = args.isFastq
+
+
+    sampleName = os.path.splitext(os.path.basename(args.reads_file))[0]
     outFile = args.output_clones
-
-    sampleName = os.path.splitext(os.path.basename(fastqfile))[0]    
+    
 
     outDir = os.path.dirname(outFile)
     if outDir == "":
         outDir = "."
     if not os.path.exists(outDir):
         os.mkdir(outDir)
+
+
+
+    dict={}
+    dict["chains"]=['IGH','IGK','IGL','TRA','TRB','TRD','TRG']
+    if args.chains:
+        dict["chains"]=args.chains.split(",")
+
+    #added by Serghei Mangul - 08/06/17
+    
+    if args.isBAM:
+        print "Parse bam file with mapped and unmapped reads"
+
+        #added by Serghei Mangul 08/06/17 - extract reads from BAM
+        fileNewInput=outDir+"/"+sampleName+"_input.fasta"
+        file=open(fileNewInput,"w")
+        for i in dict["chains"]:
+                k=0
+                extract_mapped(i,file,k)
+                print "Number of reads extacted from ", i, "locus : ",k
+        extract_unmapped(file)
+
+        file.close()
+
+        #extracted reads are fastqfile
+        fastqfile=fileNewInput
+    elif args.is_digGold:
+        print "Parse fastq file with orignal raw reads (all reads) and extract the unmapped reads"
+
+        fileNewInput=outDir+"/"+sampleName+"_input.fasta"
+        file=open(fileNewInput,"w")
+        for i in dict["chains"]:
+            k=0
+            extract_mapped(i,file,k)
+            print "Number of reads extacted from ", i, "locus : ",k
+        
+        
+        samfile = pysam.AlignmentFile(args.reads_file, "rb")
+        print  "Parse bam file with mapped reads"
+        mReads=set()
+        for read in samfile.fetch():
+            if not read.is_unmapped:
+                mReads.add(read.query_name)
+        extract_unmapped_digGold(file,mReads)
+        file.close()
+        fastqfile=fileNewInput
+    else:
+        fastqfile = args.reads_file
+    
+
+    isFastq = args.isFastq
+
+
+
 
     set_dict = {
         'isFastq': False,
@@ -610,6 +997,8 @@ if __name__ == "__main__":
         set_dict["noOverlapStep"] = args.noOverlapStep
     if args.isFastq is not None:
         set_dict["isFastq"] = args.isFastq
+
+
     if args.filterThreshold:
         set_dict["filterThreshold"] = args.filterThreshold
     if args.extendedOutput is not None:
@@ -634,6 +1023,7 @@ if __name__ == "__main__":
     print info.info.get("hello")
     imrep = ImReP(settings)
     clones = imrep.doComputeClones()
+
 
 
     final_clones = []
