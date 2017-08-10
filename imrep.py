@@ -431,13 +431,31 @@ class ImReP(object):
             formatFile = "fastq"
         if fastqfile.endswith(".gz"):
             with gzip.open(fastqfile, 'rb') as f:
-                firstLine = f.readline()
-                file_content = f.read()
-            self._fastq_handle = SeqIO.parse(StringIO(file_content), formatFile)
+                #firstLine = f.readline()
+                file_content = f.readlines()
+            #self._fastq_handle = SeqIO.parse(StringIO(file_content), formatFile)
         else:
-            self._fastq_handle = SeqIO.parse(fastqfile, formatFile)
-            with open(fastqfile) as file_check:
-                firstLine = file_check.readline()
+            #self._fastq_handle = SeqIO.parse(fastqfile, formatFile)
+            with open(fastqfile) as f:
+                #firstLine = file_check.readline()
+                file_content = f.readlines()
+
+        if formatFile == "fasta":
+            while not file_content[0][0] == ">":
+                file_content = file_content[1:]
+            while not file_content[-2][0] == ">":
+                file_content = file_content[:-1]
+        elif formatFile == "fastq":
+            while not file_content[0][0] == "@":
+                file_content = file_content[1:]
+            while not file_content[-4][0] == "@" or len(file_content[-1]) != len(file_content[-3]):
+                file_content = file_content[:-1]
+        else:
+            raise Exception("Unrecognized file format: %s!!!" % fastqfile)
+        self._fastq_handle = SeqIO.parse(StringIO("".join(file_content)), formatFile)
+
+
+        """
         if not firstLine:
             print "Empty file"
         else:
@@ -451,8 +469,8 @@ class ImReP(object):
             else:
                 raise Exception("Unrecognized file format: %s!!!" % fastqfile)
                     
-        
-                        
+        # check here if the last record is not broken 
+        """                
                         
         
         

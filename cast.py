@@ -102,4 +102,45 @@ class Cast(object):
 
 
 
+if __name__ == "__main__":
+    # this is for running cast from outside
+    import sys
+    def dumpClones2(clones, outFile):
+        """This function is taken from utils.py"""
+        header_line = "CDR3_AA_Seq\tChain_type\tRead_count\tV_chains\tD_chains\tJ_chains\n"
+        with open(outFile, "w") as f:
+            f.write(header_line)
+            for clone in clones:
+                f.write(clone)
+
+    castThreshold = {'IGH': 0.2, 'IGK': 0.2, 'IGL': 0.2, 'TRA': 0.3, 'TRB': 0.2, 'TRD': 0.2, 'TRG': 0.2}
+
+    inputfile = sys.argv[1]
+    outputfile = sys.argv[2]
+    
+    castdict = {}
+    typedict = {}
+    result = []
+    for chain in ["IGH", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG"]:
+        castdict[chain] = {}
+
+    with open(inputfile) as f:
+        content = f.readlines()
+    content = map(lambda x: x.strip().split(), content)
+    for line in content:
+        cdr3, chtype, count = line[:3]
+        typedict[cdr3] = line[3:]
+        if cdr3 not in castdict[chtype]:
+            castdict[chtype][cdr3] = int(count)
+        else:
+            castdict[chtype][cdr3] += int(count)
+    for chtype, cdict in castdict.items():
+        cast = Cast(cdict)
+        clustered = cast.doCast(castThreshold[chtype])
+        clustered = [cclone for cclone in clustered if cclone[1] > 1]
+        for x, y, z in clustered:
+            line = [x, chtype, y] + typedict[x]
+            result.append("%s\n" % "\t".join(map(str, line)))
+    dumpClones2(result, outputfile)
+
 
