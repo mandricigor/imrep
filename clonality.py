@@ -32,7 +32,7 @@ if not os.path.exists(args.outDir):
 
 
 #------
-print "Read CDR3 assembled by ImreP", args.inFile
+print ("Read CDR3 assembled by ImreP", args.inFile)
 
 #HWI-ST1148:152:C3LK5ACXX:7:2301:14697:52825/1/1 CALPIFHSRIRRRPLRPILHSRIHKHYYNKHPHHYNLPRKIVVGIVF TRAV9,TRAV18,TRAV11     NA      TRAJ4   TRAV9-2*01:4:1,TRAV9-1*01:4:1,TRAV11*01:3:0,TRAV18*01:4:1,TRAV6*01:4:1,TRAV16*01:4:1    NA      0       0
 
@@ -86,7 +86,7 @@ with open(args.inFile) as csvfile:
                 elif row[1]=="TRD":
                     cdr3_TCRD[cdr3]=count
                 else:
-                    print "ERROR : ",row, V,J
+                    print ("ERROR : ",row, V,J)
                     sys.exit(1)
 
 
@@ -130,76 +130,73 @@ alphaTCRG=str(sdi(Counter(cdr3_TCRG)))
 fileSTAT.write(base+","+nIGH+","+nIGK+","+nIGL+","+nTCRA+","+nTCRB+","+nTCRD+","+nTCRG+","+loadIGH+","+loadIGK+","+loadIGL+","+loadTCRA+","+loadTCRB+","+loadTCRD+","+loadTCRG+","+alphaIGH+","+alphaIGK+","+alphaIGL+","+alphaTCRA+","+alphaTCRB+","+alphaTCRD+","+alphaTCRG)
 fileSTAT.write("\n")
 
-print "Total number of IGH CDR3 is", len(set(cdr3_IGH))
-print "Total number of IGK CDR3 is", len(set(cdr3_IGK))
-print "Total number of IGL CDR3 is", len(set(cdr3_IGL))
-print "Total number of TCRA CDR3 is", len(set(cdr3_TCRA))
-print "Total number of TCRB CDR3 is", len(set(cdr3_TCRB))
-print "Total number of TCRG CDR3 is", len(set(cdr3_TCRG))
-print "Total number of TCRD CDR3 is", len(set(cdr3_TCRD))
+print ("Total number of IGH CDR3 is", len(set(cdr3_IGH)))
+print ("Total number of IGK CDR3 is", len(set(cdr3_IGK)))
+print ("Total number of IGL CDR3 is", len(set(cdr3_IGL)))
+print ("Total number of TCRA CDR3 is", len(set(cdr3_TCRA)))
+print ("Total number of TCRB CDR3 is", len(set(cdr3_TCRB)))
+print ("Total number of TCRG CDR3 is", len(set(cdr3_TCRG)))
+print ("Total number of TCRD CDR3 is", len(set(cdr3_TCRD)))
 
 
 
 
 #IGH
-fileIGH=open(args.outDir+"/IGH_cdr3_"+args.outDir+".txt","w")
-#fileIGH.write("CDR3,nReads")
-#fileIGH.write("\n")
-for key in  sorted(cdr3_IGH):
-    fileIGH.write(key)
+fileIGH=open(args.outDir+"/IGH_cdr3_"+args.outDir+".csv","w")
+N = sum(cdr3_IGH.values())
+for key, value in sorted(cdr3_IGH.items()):
+    fileIGH.write(key+","+str(value)+","+str(value/float(N)))
     fileIGH.write("\n")
 
 
+fileIGH.close()
+
 #IGK
-fileIGK=open(args.outDir+"/IGK_cdr3_"+args.outDir+".txt","w")
-#fileIGK.write("CDR3,nReads")
-#fileIGK.write("\n")
-for key in  sorted(cdr3_IGK):
-    fileIGK.write(key)
+fileIGK=open(args.outDir+"/IGK_cdr3_"+args.outDir+".csv","w")
+N = sum(cdr3_IGK.values())
+for key, value in sorted(cdr3_IGK.items()):
+    fileIGK.write(key+","+str(value)+","+str(value/float(N)))
     fileIGK.write("\n")
+fileIGK.close()
 
 #IGL
-fileIGL=open(args.outDir+"/IGL_cdr3_"+args.outDir+".txt","w")
-#fileIGL.write("CDR3,nReads")
-#fileIGL.write("\n")
-for key in  sorted(cdr3_IGL):
-    fileIGL.write(key)
+fileIGL=open(args.outDir+"/IGL_cdr3_"+args.outDir+".csv","w")
+N = sum(cdr3_IGL.values())
+for key, value in sorted(cdr3_IGL.items()):
+    fileIGL.write(key+","+str(value)+","+str(value/float(N)))
     fileIGL.write("\n")
+fileIGL.close()
 
 
 #TCRA
-fileTCRA=open(args.outDir+"/TCRA_cdr3_"+args.outDir+".txt","w")
-#fileTCRA.write("CDR3,nReads")
-#fileTCRA.write("\n")
-for key in  sorted(cdr3_TCRA):
-    fileTCRA.write(key)
+fileTCRA=open(args.outDir+"/TCRA_cdr3_"+args.outDir+".csv","w")
+N = sum(cdr3_TCRA.values())
+for key, value in sorted(cdr3_TCRA.items()):
+    fileTCRA.write(key+","+str(value)+","+str(value/float(N)))
     fileTCRA.write("\n")
+fileTCRA.close()
+
 
 #TCRB
-fileTCRB=open(args.outDir+"/TCRB_cdr3_"+args.outDir+".txt","w")
-#fileTCRB.write("CDR3,nReads")
-#fileTCRB.write("\n")
-for key in  sorted(cdr3_TCRB):
-    fileTCRB.write(key)
+fileTCRB=open(args.outDir+"/TCRB_cdr3_"+args.outDir+".csv","w")
+N = sum(cdr3_TCRB.values())
+for key, value in sorted(cdr3_TCRB.items()):
+    fileTCRB.write(key+","+str(value)+","+str(value/float(N)))
     fileTCRB.write("\n")
-
+fileTCRB.close()
 
 #TCRG
-fileTCRG=open(args.outDir+"/TCRG_cdr3_"+args.outDir+".txt","w")
-#fileTCRG.write("CDR3,nReads")
-#fileTCRG.write("\n")
-for key in  sorted(cdr3_TCRG):
-    fileTCRG.write(key)
+fileTCRG=open(args.outDir+"/TCRG_cdr3_"+args.outDir+".csv","w")
+N = sum(cdr3_TCRG.values())
+for key, value in sorted(cdr3_TCRG.items()):
+    fileTCRG.write(key+","+str(value)+","+str(value/float(N)))
     fileTCRG.write("\n")
+fileTCRG.close()
 
 #TCRD
-fileTCRD=open(args.outDir+"/TCRD_cdr3_"+args.outDir+".txt","w")
-#fileTCRD.write("CDR3,nReads")
-#fileTCRD.write("\n")
-for key in  sorted(cdr3_TCRD):
-    fileTCRD.write(key)
+fileTCRD=open(args.outDir+"/TCRD_cdr3_"+args.outDir+".csv","w")
+N = sum(cdr3_TCRD.values())
+for key, value in sorted(cdr3_TCRD.items()):
+    fileTCRD.write(key+","+str(value)+","+str(value/float(N)))
     fileTCRD.write("\n")
-
-
-
-
+fileTCRD.close()
