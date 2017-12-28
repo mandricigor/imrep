@@ -1,2 +1,2 @@
 SAMPLE,nIGH,nIGK,nIGL,nTCRA,nTCRB,nTCRD,nTCRG, loadIGH,nIGK,loadIGL,loadTCRA,loadTCRB,loadTCRD,loadTCRG,alphaIGH,alphaIGK,alphaIGL,alphaTCRA,alphaTCRB,alphaTCRD,alphaTCRG
-toyExample,8,0,0,0,0,0,0,92,0,0,0,0,0,0,1.87731442240385,0,0,0,0,0,0
+toyExample,8,0,0,0,0,0,0,92,0,0,0,0,0,0,1.8773144224,0,0,0,0,0,0

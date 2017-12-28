@@ -21,8 +21,8 @@ def sdi(data):
 
 
 ap = argparse.ArgumentParser()
-ap.add_argument('inFile', help='Mapped reads in bam format')
-ap.add_argument('outDir', help='Mapped reads in bam format')
+ap.add_argument('inFile', help='output of ImRep')
+ap.add_argument('outDir', help='directory to save the summary of the immune repertoire')
 
 
 args = ap.parse_args()
@@ -51,23 +51,82 @@ cdr3_TCRD={}
 cdr3_TCRG={}
 
 
+recomb_IGH={}
+recomb_IGK={}
+recomb_IGL={}
 
+recomb_TCRA={}
+recomb_TCRB={}
+recomb_TCRD={}
+recomb_TCRG={}
+
+
+#CATQHYTRPRSSCTF TRA     2       TRAV25,TRAV12,TRAV13    NA      TRAJ48
 
 
 base=os.path.splitext(basename(args.inFile))[0]
 
 
 with open(args.inFile) as csvfile:
-    readCSV = csv.reader(csvfile, delimiter='\t')
+    readCSV = csv.reader(csvfile,delimiter=";")
     next(readCSV)
     for row in readCSV:
-        V=row[2]
-        J=row[4]
+        print (row)
+        V=row[3]
+        J=row[5]
         cdr3=row[0]
         count=int(row[2])
         
         
         if row!=[]:
+
+            #extract non-ambiguous recombinations
+            if V.count(',')==0 and J.count(',')==0:
+                if row[1]=="IGH":
+                        if (V,J) not in set(recomb_IGH.keys()):
+                            recomb_IGH[(V,J)]=0
+                            recomb_IGH[(V, J)]+=count
+                        else:
+                            recomb_IGH[(V, J)] += count
+                elif row[1]=="IGK":
+                        if (V,J) not in set(recomb_IGK.keys()):
+                            recomb_IGK[(V,J)]=0
+                            recomb_IGK[(V, J)]+=count
+                        else:
+                            recomb_IGK[(V, J)] += count
+                elif row[1]=="IGL":
+                        if (V,J) not in set(recomb_IGL.keys()):
+                            recomb_IGL[(V,J)]=0
+                            recomb_IGL[(V, J)]+=count
+                        else:
+                            recomb_IGL[(V, J)] += count
+                elif row[1] == "TRA":
+                    if (V, J) not in set(recomb_TCRA.keys()):
+                        recomb_TCRA[(V, J)] = 0
+                        recomb_TCRA[(V, J)] += count
+                    else:
+                        recomb_TCRA[(V, J)] += count
+                elif row[1] == "TRB":
+                    if (V, J) not in set(recomb_TCRB.keys()):
+                        recomb_TCRB[(V, J)] = 0
+                        recomb_TCRB[(V, J)] += count
+                    else:
+                        recomb_TCRB[(V, J)] += count
+                elif row[1] == "TRG":
+                    if (V, J) not in set(recomb_TCRG.keys()):
+                        recomb_TCRG[(V, J)] = 0
+                        recomb_TCRG[(V, J)] += count
+                    else:
+                        recomb_TCRG[(V, J)] += count
+                elif row[1] == "TRD":
+                    if (V, J) not in set(recomb_TCRD.keys()):
+                        recomb_TCRD[(V, J)] = 0
+                        recomb_TCRD[(V, J)] += count
+                    else:
+                        recomb_TCRD[(V, J)] += count
+                else:
+                    print ("ERROR : ",row, V,J)
+                    sys.exit(1)
             
             
             if "*" not in row[0]:
@@ -86,16 +145,19 @@ with open(args.inFile) as csvfile:
                 elif row[1]=="TRD":
                     cdr3_TCRD[cdr3]=count
                 else:
-                    print ("ERROR : ",row, V,J)
+                    print ("ERROR : ",row)
                     sys.exit(1)
 
 
 
 
-fileSTAT=open(args.outDir+"/SUMMARY_"+args.outDir+".txt","w")
+
+#----------------
+#CDR3s
+fileSTAT=open(args.outDir+"/summary.cdr3."+args.outDir+".txt","w")
 
 
-fileSTAT.write("SAMPLE,nIGH,nIGK,nIGL,nTCRA,nTCRB,nTCRD,nTCRG, loadIGH,nIGK,loadIGL,loadTCRA,loadTCRB,loadTCRD,loadTCRG,alphaIGH,alphaIGK,alphaIGL,alphaTCRA,alphaTCRB,alphaTCRD,alphaTCRG")
+fileSTAT.write("SAMPLE,nIGH,nIGK,nIGL,nTCRA,nTCRB,nTCRD,nTCRG, loadIGH,loadIGK,loadIGL,loadTCRA,loadTCRB,loadTCRD,loadTCRG,alphaIGH,alphaIGK,alphaIGL,alphaTCRA,alphaTCRB,alphaTCRD,alphaTCRG")
 fileSTAT.write("\n")
 
 
@@ -198,5 +260,108 @@ fileTCRD=open(args.outDir+"/TCRD_cdr3_"+args.outDir+".csv","w")
 N = sum(cdr3_TCRD.values())
 for key, value in sorted(cdr3_TCRD.items()):
     fileTCRD.write(key+","+str(value)+","+str(value/float(N)))
+    fileTCRD.write("\n")
+fileTCRD.close()
+
+
+#------------------------------
+#VJs
+
+fileSTAT = open(args.outDir + "/summary.VJ." + args.outDir + ".txt", "w")
+
+fileSTAT.write(
+    "SAMPLE,nIGH,nIGK,nIGL,nTCRA,nTCRB,nTCRD,nTCRG, loadIGH,loadIGK,loadIGL,loadTCRA,loadTCRB,loadTCRD,loadTCRG,alphaIGH,alphaIGK,alphaIGL,alphaTCRA,alphaTCRB,alphaTCRD,alphaTCRG")
+fileSTAT.write("\n")
+
+nIGH = str(len((recomb_IGH)))
+nIGK = str(len((recomb_IGK)))
+nIGL = str(len((recomb_IGL)))
+nTCRA = str(len((recomb_TCRA)))
+nTCRB = str(len((recomb_TCRB)))
+nTCRD = str(len((recomb_TCRD)))
+nTCRG = str(len((recomb_TCRG)))
+
+loadIGH = str(sum(recomb_IGH.values()))
+loadIGK = str(sum(recomb_IGK.values()))
+loadIGL = str(sum(recomb_IGL.values()))
+loadTCRA = str(sum(recomb_TCRA.values()))
+loadTCRB = str(sum(recomb_TCRB.values()))
+loadTCRD = str(sum(recomb_TCRD.values()))
+loadTCRG = str(sum(recomb_TCRG.values()))
+
+alphaIGH = str(sdi(Counter(recomb_IGH)))
+alphaIGK = str(sdi(Counter(recomb_IGK)))
+alphaIGL = str(sdi(Counter(recomb_IGL)))
+alphaTCRA = str(sdi(Counter(recomb_TCRA)))
+alphaTCRB = str(sdi(Counter(recomb_TCRB)))
+alphaTCRD = str(sdi(Counter(recomb_TCRD)))
+alphaTCRG = str(sdi(Counter(recomb_TCRG)))
+
+fileSTAT.write(
+    base + "," + nIGH + "," + nIGK + "," + nIGL + "," + nTCRA + "," + nTCRB + "," + nTCRD + "," + nTCRG + "," + loadIGH + "," + loadIGK + "," + loadIGL + "," + loadTCRA + "," + loadTCRB + "," + loadTCRD + "," + loadTCRG + "," + alphaIGH + "," + alphaIGK + "," + alphaIGL + "," + alphaTCRA + "," + alphaTCRB + "," + alphaTCRD + "," + alphaTCRG)
+fileSTAT.write("\n")
+
+print ("Total number of IGH VJ recombinations is", len(set(recomb_IGH)))
+print ("Total number of IGK VJ recombinations is", len(set(recomb_IGK)))
+print ("Total number of IGL VJ recombinations is", len(set(recomb_IGL)))
+print ("Total number of TCRA VJ recombinations is", len(set(recomb_TCRA)))
+print ("Total number of TCRB VJ recombinations is", len(set(recomb_TCRB)))
+print ("Total number of TCRG VJ recombinations is", len(set(recomb_TCRG)))
+print ("Total number of TCRD VJ recombinations is", len(set(recomb_TCRD)))
+
+# IGH
+fileIGH = open(args.outDir + "/IGH_VJ_" + args.outDir + ".csv", "w")
+N = sum(recomb_IGH.values())
+for key, value in sorted(recomb_IGH.items()):
+    fileIGH.write(key[0] + "-" + key[1]+ ","+ str(value) + "," + str(value / float(N)))
+    fileIGH.write("\n")
+
+fileIGH.close()
+
+# IGK
+fileIGK = open(args.outDir + "/IGK_VJ_" + args.outDir + ".csv", "w")
+N = sum(recomb_IGK.values())
+for key, value in sorted(recomb_IGK.items()):
+    fileIGK.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
+    fileIGK.write("\n")
+fileIGK.close()
+
+# IGL
+fileIGL = open(args.outDir + "/IGL_VJ_" + args.outDir + ".csv", "w")
+N = sum(recomb_IGL.values())
+for key, value in sorted(recomb_IGL.items()):
+    fileIGL.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
+    fileIGL.write("\n")
+fileIGL.close()
+
+# TCRA
+fileTCRA = open(args.outDir + "/TCRA_VJ_" + args.outDir + ".csv", "w")
+N = sum(recomb_TCRA.values())
+for key, value in sorted(recomb_TCRA.items()):
+    fileTCRA.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
+    fileTCRA.write("\n")
+fileTCRA.close()
+
+# TCRB
+fileTCRB = open(args.outDir + "/TCRB_VJ_" + args.outDir + ".csv", "w")
+N = sum(recomb_TCRB.values())
+for key, value in sorted(recomb_TCRB.items()):
+    fileTCRB.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
+    fileTCRB.write("\n")
+fileTCRB.close()
+
+# TCRG
+fileTCRG = open(args.outDir + "/TCRG_VJ_" + args.outDir + ".csv", "w")
+N = sum(recomb_TCRG.values())
+for key, value in sorted(recomb_TCRG.items()):
+    fileTCRG.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
+    fileTCRG.write("\n")
+fileTCRG.close()
+
+# TCRD
+fileTCRD = open(args.outDir + "/TCRD_VJ_" + args.outDir + ".csv", "w")
+N = sum(recomb_TCRD.values())
+for key, value in sorted(recomb_TCRD.items()):
+    fileTCRD.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
     fileTCRD.write("\n")
 fileTCRD.close()
