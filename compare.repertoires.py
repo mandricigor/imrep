@@ -11,7 +11,7 @@ import collections
 
 def Soerenson(dict1,dict2):
     shared=set(dict1.keys()) & set(dict2.keys())
-    return 1-len(shared)*2.0/(len(set(dict1.keys()))+len(set(dict2.keys())))
+    return 1-len(shared)*2.0/(len(set(dict1.keys()))+len(set(dict2.keys()))+0.0000000001)
 
 
 
@@ -31,7 +31,7 @@ def BrayCurtis(dict1,dict2):
     shared=set(dict1.keys()) & set(dict2.keys())
     for i in shared:
         s+=min(dict1[i],dict2[i])
-    return 1-2.0*s/(sum(dict1.values())+sum(dict2.values()))
+    return 1-2.0*s/(sum(dict1.values())+sum(dict2.values())+0.0000000001)
 
 
 
@@ -49,16 +49,201 @@ def Jaccard(dict1,dict2):
     shared=set(dict1.keys()) & set(dict2.keys())
     for i in shared:
         s+=min(dict1[i],dict2[i])
-    b=1-2.0*s/(sum(dict1.values())+sum(dict2.values()))
+    b=1-2.0*s/(sum(dict1.values())+sum(dict2.values())+0.000000001)
     return 2*b/(1+b)
 
+
+def file2dict(fileName):
+    dict={}
+    file=open(fileName,"r")
+    reader=csv.reader(file)
+    for row in reader:
+        dict[row[0]]=int(row[1])
+    return dict
 #----------------------------------------------------------------------------------------
 
 ap = argparse.ArgumentParser()
-ap.add_argument('dir1', help='Directory corresponding to sample 1. Obtained by ')
-ap.add_argument('dir2', help='dir to save teh results')
-ap.add_argument('extension', help='extension of the individulas files in the dir')
-ap.add_argument('column1', help='number of column1 with items')
-ap.add_argument('column2', help='number of column2 with relative frequency')
-ap.add_argument('header', help='0/1 if the header is in the individual file')
+ap.add_argument('dir_1', help='Directory corresponding to sample 1. Obtained by clonaloty.py ')
+ap.add_argument('dir_2', help='Directory corresponding to sample 2. Obtained by clonaloty.py')
+ap.add_argument('outDir', help='dir to save the results')
+
 args = ap.parse_args()
+
+
+sample_1=args.dir_1.split("/")[len(args.dir_1.split("/"))-1]
+sample_2=args.dir_2.split("/")[len(args.dir_2.split("/"))-1]
+
+
+file_IGH_1=args.dir_1+"/IGH_cdr3_"+sample_1+".csv"
+file_IGH_2=args.dir_2+"/IGH_cdr3_"+sample_2+".csv"
+
+file_IGK_1=args.dir_1+"/IGK_cdr3_"+sample_1+".csv"
+file_IGK_2=args.dir_2+"/IGK_cdr3_"+sample_2+".csv"
+
+file_IGL_1=args.dir_1+"/IGL_cdr3_"+sample_1+".csv"
+file_IGL_2=args.dir_2+"/IGL_cdr3_"+sample_2+".csv"
+
+file_TCRA_1=args.dir_1+"/TCRA_cdr3_"+sample_1+".csv"
+file_TCRA_2=args.dir_2+"/TCRA_cdr3_"+sample_2+".csv"
+
+file_TCRB_1=args.dir_1+"/TCRB_cdr3_"+sample_1+".csv"
+file_TCRB_2=args.dir_2+"/TCRB_cdr3_"+sample_2+".csv"
+
+file_TCRD_1=args.dir_1+"/TCRD_cdr3_"+sample_1+".csv"
+file_TCRD_2=args.dir_2+"/TCRD_cdr3_"+sample_2+".csv"
+
+file_TCRG_1=args.dir_1+"/TCRG_cdr3_"+sample_1+".csv"
+file_TCRG_2=args.dir_2+"/TCRG_cdr3_"+sample_2+".csv"
+
+
+dict_IGH_1=file2dict(file_IGH_1)
+dict_IGH_2=file2dict(file_IGH_2)
+
+dict_IGK_1=file2dict(file_IGK_1)
+dict_IGK_2=file2dict(file_IGK_2)
+
+dict_IGL_1=file2dict(file_IGL_1)
+dict_IGL_2=file2dict(file_IGL_2)
+
+dict_TCRA_1=file2dict(file_TCRA_1)
+dict_TCRA_2=file2dict(file_TCRA_2)
+
+dict_TCRB_1=file2dict(file_TCRB_1)
+dict_TCRB_2=file2dict(file_TCRB_2)
+
+dict_TCRD_1=file2dict(file_TCRD_1)
+dict_TCRD_2=file2dict(file_TCRD_2)
+
+dict_TCRG_1=file2dict(file_TCRG_1)
+dict_TCRG_2=file2dict(file_TCRG_2)
+
+
+set_intersection_IGH=(set(dict_IGH_1.keys()).intersection(set(dict_IGH_2.keys())))
+set_intersection_IGK=(set(dict_IGK_1.keys()).intersection(set(dict_IGK_2.keys())))
+set_intersection_IGL=(set(dict_IGL_1.keys()).intersection(set(dict_IGL_2.keys())))
+
+set_intersection_TCRA=(set(dict_TCRA_1.keys()).intersection(set(dict_TCRA_2.keys())))
+set_intersection_TCRB=(set(dict_TCRB_1.keys()).intersection(set(dict_TCRB_2.keys())))
+set_intersection_TCRD=(set(dict_TCRD_1.keys()).intersection(set(dict_TCRD_2.keys())))
+set_intersection_TCRG=(set(dict_TCRG_1.keys()).intersection(set(dict_TCRG_2.keys())))
+
+#outfile.write("\n".join(itemlist))
+
+if not os.path.exists(args.outDir):
+    os.makedirs(args.outDir)
+
+file=open(args.outDir+"/compare.similarity.CDR3.intersection.csv","w")
+file.write("sample1,sample2,intersection.IGH,intersection.IGK,intersection.IGL,intersection.TCRA,intersection.TCRB,intersection.TCRG,intersection.TCRG")
+file.write("\n")
+file.write(sample_1+","+sample_2+","+str(len(set_intersection_IGH))+","+str(len(set_intersection_IGK))+","+str(len(set_intersection_IGL))+","+str(len(set_intersection_TCRA))+","+str(len(set_intersection_TCRB))+","+str(len(set_intersection_TCRD))+","+str(len(set_intersection_TCRG)))
+file.close()
+
+#Jaccard
+file=open(args.outDir+"/compare.similarity.CDR3.Jaccard.csv","w")
+file.write("sample1,sample2,Jaccard.IGH,Jaccard.IGK,Jaccard.IGL,Jaccard.TCRA,Jaccard.TCRB,Jaccard.TCRG,Jaccard.TCRG")
+file.write("\n")
+file.write(sample_1+","+sample_2+","+str(Jaccard(dict_IGH_1,dict_IGH_2))+","+str(Jaccard(dict_IGK_1,dict_IGK_2))+","+str(Jaccard(dict_IGL_1,dict_IGL_2))+","+str(Jaccard(dict_TCRA_1,dict_TCRA_2))+","+str(Jaccard(dict_TCRB_1,dict_TCRB_2))+","+str(Jaccard(dict_TCRD_1,dict_TCRD_2))+","+str(Jaccard(dict_TCRG_1,dict_TCRG_2)))
+file.close()
+
+#Soerenson
+file=open(args.outDir+"/compare.similarity.CDR3.Soerenson.csv","w")
+file.write("sample1,sample2,Soerenson.IGH,Soerenson.IGK,Soerenson.IGL,Soerenson.TCRA,Soerenson.TCRB,Soerenson.TCRG,Soerenson.TCRG")
+file.write("\n")
+file.write(sample_1+","+sample_2+","+str(Soerenson(dict_IGH_1,dict_IGH_2))+","+str(Soerenson(dict_IGK_1,dict_IGK_2))+","+str(Soerenson(dict_IGL_1,dict_IGL_2))+","+str(Soerenson(dict_TCRA_1,dict_TCRA_2))+","+str(Soerenson(dict_TCRB_1,dict_TCRB_2))+","+str(Soerenson(dict_TCRD_1,dict_TCRD_2))+","+str(Soerenson(dict_TCRG_1,dict_TCRG_2)))
+file.close()
+
+#BrayCurtis
+file=open(args.outDir+"/compare.similarity.CDR3.BrayCurtis.csv","w")
+file.write("sample1,sample2,BrayCurtis.IGH,BrayCurtis.IGK,BrayCurtis.IGL,BrayCurtis.TCRA,BrayCurtis.TCRB,BrayCurtis.TCRG,BrayCurtis.TCRG")
+file.write("\n")
+file.write(sample_1+","+sample_2+","+str(BrayCurtis(dict_IGH_1,dict_IGH_2))+","+str(BrayCurtis(dict_IGK_1,dict_IGK_2))+","+str(BrayCurtis(dict_IGL_1,dict_IGL_2))+","+str(BrayCurtis(dict_TCRA_1,dict_TCRA_2))+","+str(BrayCurtis(dict_TCRB_1,dict_TCRB_2))+","+str(BrayCurtis(dict_TCRD_1,dict_TCRD_2))+","+str(BrayCurtis(dict_TCRG_1,dict_TCRG_2)))
+file.close()
+
+
+#VJ -----------------------------
+
+file_IGH_1=args.dir_1+"/IGH_VJ_"+sample_1+".csv"
+file_IGH_2=args.dir_2+"/IGH_VJ_"+sample_2+".csv"
+
+file_IGK_1=args.dir_1+"/IGK_VJ_"+sample_1+".csv"
+file_IGK_2=args.dir_2+"/IGK_VJ_"+sample_2+".csv"
+
+file_IGL_1=args.dir_1+"/IGL_VJ_"+sample_1+".csv"
+file_IGL_2=args.dir_2+"/IGL_VJ_"+sample_2+".csv"
+
+file_TCRA_1=args.dir_1+"/TCRA_VJ_"+sample_1+".csv"
+file_TCRA_2=args.dir_2+"/TCRA_VJ_"+sample_2+".csv"
+
+file_TCRB_1=args.dir_1+"/TCRB_VJ_"+sample_1+".csv"
+file_TCRB_2=args.dir_2+"/TCRB_VJ_"+sample_2+".csv"
+
+file_TCRD_1=args.dir_1+"/TCRD_VJ_"+sample_1+".csv"
+file_TCRD_2=args.dir_2+"/TCRD_VJ_"+sample_2+".csv"
+
+file_TCRG_1=args.dir_1+"/TCRG_VJ_"+sample_1+".csv"
+file_TCRG_2=args.dir_2+"/TCRG_VJ_"+sample_2+".csv"
+
+
+dict_IGH_1=file2dict(file_IGH_1)
+dict_IGH_2=file2dict(file_IGH_2)
+
+dict_IGK_1=file2dict(file_IGK_1)
+dict_IGK_2=file2dict(file_IGK_2)
+
+dict_IGL_1=file2dict(file_IGL_1)
+dict_IGL_2=file2dict(file_IGL_2)
+
+dict_TCRA_1=file2dict(file_TCRA_1)
+dict_TCRA_2=file2dict(file_TCRA_2)
+
+dict_TCRB_1=file2dict(file_TCRB_1)
+dict_TCRB_2=file2dict(file_TCRB_2)
+
+dict_TCRD_1=file2dict(file_TCRD_1)
+dict_TCRD_2=file2dict(file_TCRD_2)
+
+dict_TCRG_1=file2dict(file_TCRG_1)
+dict_TCRG_2=file2dict(file_TCRG_2)
+
+
+set_intersection_IGH=(set(dict_IGH_1.keys()).intersection(set(dict_IGH_2.keys())))
+set_intersection_IGK=(set(dict_IGK_1.keys()).intersection(set(dict_IGK_2.keys())))
+set_intersection_IGL=(set(dict_IGL_1.keys()).intersection(set(dict_IGL_2.keys())))
+
+set_intersection_TCRA=(set(dict_TCRA_1.keys()).intersection(set(dict_TCRA_2.keys())))
+set_intersection_TCRB=(set(dict_TCRB_1.keys()).intersection(set(dict_TCRB_2.keys())))
+set_intersection_TCRD=(set(dict_TCRD_1.keys()).intersection(set(dict_TCRD_2.keys())))
+set_intersection_TCRG=(set(dict_TCRG_1.keys()).intersection(set(dict_TCRG_2.keys())))
+
+#outfile.write("\n".join(itemlist))
+
+if not os.path.exists(args.outDir):
+    os.makedirs(args.outDir)
+
+file=open(args.outDir+"/compare.similarity.VJ.intersection.csv","w")
+file.write("sample1,sample2,intersection.IGH,intersection.IGK,intersection.IGL,intersection.TCRA,intersection.TCRB,intersection.TCRG,intersection.TCRG")
+file.write("\n")
+file.write(sample_1+","+sample_2+","+str(len(set_intersection_IGH))+","+str(len(set_intersection_IGK))+","+str(len(set_intersection_IGL))+","+str(len(set_intersection_TCRA))+","+str(len(set_intersection_TCRB))+","+str(len(set_intersection_TCRD))+","+str(len(set_intersection_TCRG)))
+file.close()
+
+#Jaccard
+file=open(args.outDir+"/compare.similarity.VJ.Jaccard.csv","w")
+file.write("sample1,sample2,Jaccard.IGH,Jaccard.IGK,Jaccard.IGL,Jaccard.TCRA,Jaccard.TCRB,Jaccard.TCRG,Jaccard.TCRG")
+file.write("\n")
+file.write(sample_1+","+sample_2+","+str(Jaccard(dict_IGH_1,dict_IGH_2))+","+str(Jaccard(dict_IGK_1,dict_IGK_2))+","+str(Jaccard(dict_IGL_1,dict_IGL_2))+","+str(Jaccard(dict_TCRA_1,dict_TCRA_2))+","+str(Jaccard(dict_TCRB_1,dict_TCRB_2))+","+str(Jaccard(dict_TCRD_1,dict_TCRD_2))+","+str(Jaccard(dict_TCRG_1,dict_TCRG_2)))
+file.close()
+
+#Soerenson
+file=open(args.outDir+"/compare.similarity.VJ.Soerenson.csv","w")
+file.write("sample1,sample2,Soerenson.IGH,Soerenson.IGK,Soerenson.IGL,Soerenson.TCRA,Soerenson.TCRB,Soerenson.TCRG,Soerenson.TCRG")
+file.write("\n")
+file.write(sample_1+","+sample_2+","+str(Soerenson(dict_IGH_1,dict_IGH_2))+","+str(Soerenson(dict_IGK_1,dict_IGK_2))+","+str(Soerenson(dict_IGL_1,dict_IGL_2))+","+str(Soerenson(dict_TCRA_1,dict_TCRA_2))+","+str(Soerenson(dict_TCRB_1,dict_TCRB_2))+","+str(Soerenson(dict_TCRD_1,dict_TCRD_2))+","+str(Soerenson(dict_TCRG_1,dict_TCRG_2)))
+file.close()
+
+#BrayCurtis
+file=open(args.outDir+"/compare.similarity.VJ.BrayCurtis.csv","w")
+file.write("sample1,sample2,BrayCurtis.IGH,BrayCurtis.IGK,BrayCurtis.IGL,BrayCurtis.TCRA,BrayCurtis.TCRB,BrayCurtis.TCRG,BrayCurtis.TCRG")
+file.write("\n")
+file.write(sample_1+","+sample_2+","+str(BrayCurtis(dict_IGH_1,dict_IGH_2))+","+str(BrayCurtis(dict_IGK_1,dict_IGK_2))+","+str(BrayCurtis(dict_IGL_1,dict_IGL_2))+","+str(BrayCurtis(dict_TCRA_1,dict_TCRA_2))+","+str(BrayCurtis(dict_TCRB_1,dict_TCRB_2))+","+str(BrayCurtis(dict_TCRD_1,dict_TCRD_2))+","+str(BrayCurtis(dict_TCRG_1,dict_TCRG_2)))
+file.close()
+
