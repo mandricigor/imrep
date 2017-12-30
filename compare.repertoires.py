@@ -147,6 +147,7 @@ file=open(args.outDir+"/compare.similarity.CDR3.intersection.csv","w")
 file.write("sample1,sample2,intersection.IGH,intersection.IGK,intersection.IGL,intersection.TCRA,intersection.TCRB,intersection.TCRG,intersection.TCRG")
 file.write("\n")
 file.write(sample_1+","+sample_2+","+str(len(set_intersection_IGH))+","+str(len(set_intersection_IGK))+","+str(len(set_intersection_IGL))+","+str(len(set_intersection_TCRA))+","+str(len(set_intersection_TCRB))+","+str(len(set_intersection_TCRD))+","+str(len(set_intersection_TCRG)))
+file.write("\n")
 file.close()
 
 #Jaccard
@@ -154,6 +155,7 @@ file=open(args.outDir+"/compare.similarity.CDR3.Jaccard.csv","w")
 file.write("sample1,sample2,Jaccard.IGH,Jaccard.IGK,Jaccard.IGL,Jaccard.TCRA,Jaccard.TCRB,Jaccard.TCRG,Jaccard.TCRG")
 file.write("\n")
 file.write(sample_1+","+sample_2+","+str(Jaccard(dict_IGH_1,dict_IGH_2))+","+str(Jaccard(dict_IGK_1,dict_IGK_2))+","+str(Jaccard(dict_IGL_1,dict_IGL_2))+","+str(Jaccard(dict_TCRA_1,dict_TCRA_2))+","+str(Jaccard(dict_TCRB_1,dict_TCRB_2))+","+str(Jaccard(dict_TCRD_1,dict_TCRD_2))+","+str(Jaccard(dict_TCRG_1,dict_TCRG_2)))
+file.write("\n")
 file.close()
 
 #Soerenson
@@ -161,6 +163,7 @@ file=open(args.outDir+"/compare.similarity.CDR3.Soerenson.csv","w")
 file.write("sample1,sample2,Soerenson.IGH,Soerenson.IGK,Soerenson.IGL,Soerenson.TCRA,Soerenson.TCRB,Soerenson.TCRG,Soerenson.TCRG")
 file.write("\n")
 file.write(sample_1+","+sample_2+","+str(Soerenson(dict_IGH_1,dict_IGH_2))+","+str(Soerenson(dict_IGK_1,dict_IGK_2))+","+str(Soerenson(dict_IGL_1,dict_IGL_2))+","+str(Soerenson(dict_TCRA_1,dict_TCRA_2))+","+str(Soerenson(dict_TCRB_1,dict_TCRB_2))+","+str(Soerenson(dict_TCRD_1,dict_TCRD_2))+","+str(Soerenson(dict_TCRG_1,dict_TCRG_2)))
+file.write("\n")
 file.close()
 
 #BrayCurtis
@@ -168,6 +171,7 @@ file=open(args.outDir+"/compare.similarity.CDR3.BrayCurtis.csv","w")
 file.write("sample1,sample2,BrayCurtis.IGH,BrayCurtis.IGK,BrayCurtis.IGL,BrayCurtis.TCRA,BrayCurtis.TCRB,BrayCurtis.TCRG,BrayCurtis.TCRG")
 file.write("\n")
 file.write(sample_1+","+sample_2+","+str(BrayCurtis(dict_IGH_1,dict_IGH_2))+","+str(BrayCurtis(dict_IGK_1,dict_IGK_2))+","+str(BrayCurtis(dict_IGL_1,dict_IGL_2))+","+str(BrayCurtis(dict_TCRA_1,dict_TCRA_2))+","+str(BrayCurtis(dict_TCRB_1,dict_TCRB_2))+","+str(BrayCurtis(dict_TCRD_1,dict_TCRD_2))+","+str(BrayCurtis(dict_TCRG_1,dict_TCRG_2)))
+file.write("\n")
 file.close()
 
 
@@ -235,6 +239,7 @@ file=open(args.outDir+"/compare.similarity.VJ.intersection.csv","w")
 file.write("sample1,sample2,intersection.IGH,intersection.IGK,intersection.IGL,intersection.TCRA,intersection.TCRB,intersection.TCRG,intersection.TCRG")
 file.write("\n")
 file.write(sample_1+","+sample_2+","+str(len(set_intersection_IGH))+","+str(len(set_intersection_IGK))+","+str(len(set_intersection_IGL))+","+str(len(set_intersection_TCRA))+","+str(len(set_intersection_TCRB))+","+str(len(set_intersection_TCRD))+","+str(len(set_intersection_TCRG)))
+file.write("\n")
 file.close()
 
 #Jaccard
@@ -242,6 +247,7 @@ file=open(args.outDir+"/compare.similarity.VJ.Jaccard.csv","w")
 file.write("sample1,sample2,Jaccard.IGH,Jaccard.IGK,Jaccard.IGL,Jaccard.TCRA,Jaccard.TCRB,Jaccard.TCRG,Jaccard.TCRG")
 file.write("\n")
 file.write(sample_1+","+sample_2+","+str(Jaccard(dict_IGH_1,dict_IGH_2))+","+str(Jaccard(dict_IGK_1,dict_IGK_2))+","+str(Jaccard(dict_IGL_1,dict_IGL_2))+","+str(Jaccard(dict_TCRA_1,dict_TCRA_2))+","+str(Jaccard(dict_TCRB_1,dict_TCRB_2))+","+str(Jaccard(dict_TCRD_1,dict_TCRD_2))+","+str(Jaccard(dict_TCRG_1,dict_TCRG_2)))
+file.write("\n")
 file.close()
 
 #Soerenson
@@ -249,6 +255,7 @@ file=open(args.outDir+"/compare.similarity.VJ.Soerenson.csv","w")
 file.write("sample1,sample2,Soerenson.IGH,Soerenson.IGK,Soerenson.IGL,Soerenson.TCRA,Soerenson.TCRB,Soerenson.TCRG,Soerenson.TCRG")
 file.write("\n")
 file.write(sample_1+","+sample_2+","+str(Soerenson(dict_IGH_1,dict_IGH_2))+","+str(Soerenson(dict_IGK_1,dict_IGK_2))+","+str(Soerenson(dict_IGL_1,dict_IGL_2))+","+str(Soerenson(dict_TCRA_1,dict_TCRA_2))+","+str(Soerenson(dict_TCRB_1,dict_TCRB_2))+","+str(Soerenson(dict_TCRD_1,dict_TCRD_2))+","+str(Soerenson(dict_TCRG_1,dict_TCRG_2)))
+file.write("\n")
 file.close()
 
 #BrayCurtis
@@ -256,5 +263,6 @@ file=open(args.outDir+"/compare.similarity.VJ.BrayCurtis.csv","w")
 file.write("sample1,sample2,BrayCurtis.IGH,BrayCurtis.IGK,BrayCurtis.IGL,BrayCurtis.TCRA,BrayCurtis.TCRB,BrayCurtis.TCRG,BrayCurtis.TCRG")
 file.write("\n")
 file.write(sample_1+","+sample_2+","+str(BrayCurtis(dict_IGH_1,dict_IGH_2))+","+str(BrayCurtis(dict_IGK_1,dict_IGK_2))+","+str(BrayCurtis(dict_IGL_1,dict_IGL_2))+","+str(BrayCurtis(dict_TCRA_1,dict_TCRA_2))+","+str(BrayCurtis(dict_TCRB_1,dict_TCRB_2))+","+str(BrayCurtis(dict_TCRD_1,dict_TCRD_2))+","+str(BrayCurtis(dict_TCRG_1,dict_TCRG_2)))
+file.write("\n")
 file.close()
 
