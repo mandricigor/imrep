@@ -70,30 +70,41 @@ ap.add_argument('outDir', help='dir to save the results')
 args = ap.parse_args()
 
 
-sample_1=args.dir_1.split("/")[len(args.dir_1.split("/"))-1]
-sample_2=args.dir_2.split("/")[len(args.dir_2.split("/"))-1]
+
+if  args.dir_1.endswith('/'):
+    sample_1=args.dir_1.split("/")[len(args.dir_1.split("/"))-2]
+else:
+    sample_1 = args.dir_1.split("/")[len(args.dir_1.split("/")) - 1]
+
+if  args.dir_2.endswith('/'):
+    sample_2=args.dir_2.split("/")[len(args.dir_2.split("/"))-2]
+else:
+    sample_2 = args.dir_2.split("/")[len(args.dir_2.split("/")) - 1]
 
 
-file_IGH_1=args.dir_1+"/IGH_cdr3_"+sample_1+".csv"
-file_IGH_2=args.dir_2+"/IGH_cdr3_"+sample_2+".csv"
+print ("-----")
+print (sample_1,sample_2)
 
-file_IGK_1=args.dir_1+"/IGK_cdr3_"+sample_1+".csv"
-file_IGK_2=args.dir_2+"/IGK_cdr3_"+sample_2+".csv"
+file_IGH_1=args.dir_1+"/IGH.cdr3.FREQ."+sample_1+".csv"
+file_IGH_2=args.dir_2+"/IGH.cdr3.FREQ."+sample_2+".csv"
 
-file_IGL_1=args.dir_1+"/IGL_cdr3_"+sample_1+".csv"
-file_IGL_2=args.dir_2+"/IGL_cdr3_"+sample_2+".csv"
+file_IGK_1=args.dir_1+"/IGK.cdr3.FREQ."+sample_1+".csv"
+file_IGK_2=args.dir_2+"/IGK.cdr3.FREQ."+sample_2+".csv"
 
-file_TCRA_1=args.dir_1+"/TCRA_cdr3_"+sample_1+".csv"
-file_TCRA_2=args.dir_2+"/TCRA_cdr3_"+sample_2+".csv"
+file_IGL_1=args.dir_1+"/IGL.cdr3.FREQ."+sample_1+".csv"
+file_IGL_2=args.dir_2+"/IGL.cdr3.FREQ."+sample_2+".csv"
 
-file_TCRB_1=args.dir_1+"/TCRB_cdr3_"+sample_1+".csv"
-file_TCRB_2=args.dir_2+"/TCRB_cdr3_"+sample_2+".csv"
+file_TCRA_1=args.dir_1+"/TCRA.cdr3.FREQ."+sample_1+".csv"
+file_TCRA_2=args.dir_2+"/TCRA.cdr3.FREQ."+sample_2+".csv"
 
-file_TCRD_1=args.dir_1+"/TCRD_cdr3_"+sample_1+".csv"
-file_TCRD_2=args.dir_2+"/TCRD_cdr3_"+sample_2+".csv"
+file_TCRB_1=args.dir_1+"/TCRB.cdr3.FREQ."+sample_1+".csv"
+file_TCRB_2=args.dir_2+"/TCRB.cdr3.FREQ."+sample_2+".csv"
 
-file_TCRG_1=args.dir_1+"/TCRG_cdr3_"+sample_1+".csv"
-file_TCRG_2=args.dir_2+"/TCRG_cdr3_"+sample_2+".csv"
+file_TCRD_1=args.dir_1+"/TCRD.cdr3.FREQ."+sample_1+".csv"
+file_TCRD_2=args.dir_2+"/TCRD.cdr3.FREQ."+sample_2+".csv"
+
+file_TCRG_1=args.dir_1+"/TCRG.cdr3.FREQ."+sample_1+".csv"
+file_TCRG_2=args.dir_2+"/TCRG.cdr3.FREQ."+sample_2+".csv"
 
 
 dict_IGH_1=file2dict(file_IGH_1)
@@ -162,26 +173,26 @@ file.close()
 
 #VJ -----------------------------
 
-file_IGH_1=args.dir_1+"/IGH_VJ_"+sample_1+".csv"
-file_IGH_2=args.dir_2+"/IGH_VJ_"+sample_2+".csv"
+file_IGH_1=args.dir_1+"/IGH.VJ.FREQ."+sample_1+".csv"
+file_IGH_2=args.dir_2+"/IGH.VJ.FREQ."+sample_2+".csv"
 
-file_IGK_1=args.dir_1+"/IGK_VJ_"+sample_1+".csv"
-file_IGK_2=args.dir_2+"/IGK_VJ_"+sample_2+".csv"
+file_IGK_1=args.dir_1+"/IGK.VJ.FREQ."+sample_1+".csv"
+file_IGK_2=args.dir_2+"/IGK.VJ.FREQ."+sample_2+".csv"
 
-file_IGL_1=args.dir_1+"/IGL_VJ_"+sample_1+".csv"
-file_IGL_2=args.dir_2+"/IGL_VJ_"+sample_2+".csv"
+file_IGL_1=args.dir_1+"/IGL.VJ.FREQ."+sample_1+".csv"
+file_IGL_2=args.dir_2+"/IGL.VJ.FREQ."+sample_2+".csv"
 
-file_TCRA_1=args.dir_1+"/TCRA_VJ_"+sample_1+".csv"
-file_TCRA_2=args.dir_2+"/TCRA_VJ_"+sample_2+".csv"
+file_TCRA_1=args.dir_1+"/TCRA.VJ.FREQ."+sample_1+".csv"
+file_TCRA_2=args.dir_2+"/TCRA.VJ.FREQ."+sample_2+".csv"
 
-file_TCRB_1=args.dir_1+"/TCRB_VJ_"+sample_1+".csv"
-file_TCRB_2=args.dir_2+"/TCRB_VJ_"+sample_2+".csv"
+file_TCRB_1=args.dir_1+"/TCRB.VJ.FREQ."+sample_1+".csv"
+file_TCRB_2=args.dir_2+"/TCRB.VJ.FREQ."+sample_2+".csv"
 
-file_TCRD_1=args.dir_1+"/TCRD_VJ_"+sample_1+".csv"
-file_TCRD_2=args.dir_2+"/TCRD_VJ_"+sample_2+".csv"
+file_TCRD_1=args.dir_1+"/TCRD.VJ.FREQ."+sample_1+".csv"
+file_TCRD_2=args.dir_2+"/TCRD.VJ.FREQ."+sample_2+".csv"
 
-file_TCRG_1=args.dir_1+"/TCRG_VJ_"+sample_1+".csv"
-file_TCRG_2=args.dir_2+"/TCRG_VJ_"+sample_2+".csv"
+file_TCRG_1=args.dir_1+"/TCRG.VJ.FREQ."+sample_1+".csv"
+file_TCRG_2=args.dir_2+"/TCRG.VJ.FREQ."+sample_2+".csv"
 
 
 dict_IGH_1=file2dict(file_IGH_1)
