@@ -46,7 +46,7 @@ def extract_unmapped_digGold(file, mSet):
             file.write(str(record.seq))
             file.write("\n")
             k+=1
-    print "Number of unmapped reads extracted",k
+    print ("Number of unmapped reads extracted",k)
 
 def extract_unmapped(file):
     k=0
@@ -58,7 +58,7 @@ def extract_unmapped(file):
             file.write("\n")
             file.write(str(read.query_sequence))
             file.write("\n")
-    print "Number of unmapped reads extracted",k
+    print ("Number of unmapped reads extracted",k)
     samfile.close()
 
 
@@ -913,12 +913,12 @@ if __name__ == "__main__":
     
     #Check compatibility of options
     if args.is_hg38 and args.species=="mouse":
-        print "::::::ERROR. Options --hg38 and -s mouse are not compatible. Please keep only one of those options."
-        print "Exit!"
+        print ("::::::ERROR. Options --hg38 and -s mouse are not compatible. Please keep only one of those options.")
+        print ("Exit!")
         sys.exit(1)
     
     if args.isBAM and args.is_digGold:
-        print "::::::ERROR. Options --bam and --digGold are not compatible. Please keep only one of those options."
+        print ("::::::ERROR. Options --bam and --digGold are not compatible. Please keep only one of those options.")
         sys.exit(1)
 
 
@@ -943,7 +943,7 @@ if __name__ == "__main__":
     #added by Serghei Mangul - 08/06/17
     
     if args.isBAM:
-        print "Parse bam file with mapped and unmapped reads"
+        print ("Parse bam file with mapped and unmapped reads")
 
         #added by Serghei Mangul 08/06/17 - extract reads from BAM
         fileNewInput=outDir+"/"+sampleName+"_input.fasta"
@@ -951,7 +951,7 @@ if __name__ == "__main__":
         for i in dict["chains"]:
                 k=0
                 extract_mapped(i,file,k)
-                print "Number of reads extacted from ", i, "locus : ",k
+                print ("Number of reads extacted from ", i, "locus : ",k)
         extract_unmapped(file)
 
         file.close()
@@ -959,18 +959,18 @@ if __name__ == "__main__":
         #extracted reads are fastqfile
         fastqfile=fileNewInput
     elif args.is_digGold:
-        print "Parse fastq file with orignal raw reads (all reads) and extract the unmapped reads"
+        print ("Parse fastq file with orignal raw reads (all reads) and extract the unmapped reads")
 
         fileNewInput=outDir+"/"+sampleName+"_input.fasta"
         file=open(fileNewInput,"w")
         for i in dict["chains"]:
             k=0
             extract_mapped(i,file,k)
-            print "Number of reads extacted from ", i, "locus : ",k
+            print ("Number of reads extacted from ", i, "locus : ",k)
         
         
         samfile = pysam.AlignmentFile(args.reads_file, "rb")
-        print  "Parse bam file with mapped reads"
+        print  ("Parse bam file with mapped reads")
         mReads=set()
         for read in samfile.fetch():
             if not read.is_unmapped:
@@ -1037,8 +1037,8 @@ if __name__ == "__main__":
     settings = Settings(**set_dict)
 
     release = info.info.get("release", "0.1")
-    print "Starting ImReP-%s (developped by %s)" % (release, ", ".join(info.info.get("contributors", "")))
-    print info.info.get("hello")
+    print ("Starting ImReP-%s (developped by %s)" % (release, ", ".join(info.info.get("contributors", ""))))
+    print (info.info.get("hello"))
     imrep = ImReP(settings)
     clones = imrep.doComputeClones()
 
@@ -1047,7 +1047,7 @@ if __name__ == "__main__":
     final_clones = []
     if set_dict["extendedOutput"]:
         with open(outDir + "/" + "full_cdr3_%s.txt" % sampleName, "w") as f:
-           header_line = "Read_name\tFull_CDR3_AA_Seq\tV_genes\tD_genes\tJ_genes\tV_allele_name:overlap_aminoacids:mismatches_aminoacids\tJ_allele_name:overlap_aminoacids:mismatches_aminoacids\tIs_V_allele_uniq\tIs_V_allele_uniq\tAre_both_V_and_J_alleles_uniq\n"
+           header_line = "Read_name,Full_CDR3_AA_Seq,V_genes,D_genes,J_genes,V_allele_name:overlap_aminoacids:mismatches_aminoacids,J_allele_name:overlap_aminoacids:mismatches_aminoacids,Is_V_allele_uniq,Is_V_allele_uniq,Are_both_V_and_J_alleles_uniq\n"
            f.write(header_line)
            for cl in clones:
                 #isOverlapping = int(imrep.pSeq_read_map[cl[0]].get("overlap", "NA") != "NA")
@@ -1083,10 +1083,10 @@ if __name__ == "__main__":
                         di_j = ",".join(di_j)
                         if not di_j:
                             di_j = "NA"
-                        f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (readId, cl[0], cl[1], cl[2], cl[3], di_v, di_j, uniq_v, uniq_j, uniq_vj))
-                        final_clones.append(cl[0] + "\t%s" % cl[1] + "\t%s\t" + "%s\t%s\t%s\n" % (cl[2], cl[3], cl[4]))
+                        f.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (readId, cl[0], cl[1], cl[2], cl[3], di_v, di_j, uniq_v, uniq_j, uniq_vj))
+                        final_clones.append(cl[0] + ",%s" % cl[1] + ",%s," + "%s,%s,%s\n" % (cl[2], cl[3], cl[4]))
         with open(outDir + "/" + "partial_cdr3_%s.txt" % sampleName, "w") as f:
-            header_line = "Read_name\tPartial_CDR3_AA_Seq\tV_genes\tD_genes\tJ_genes\tV_allele_name:overlap_aminoacids:mismatches_aminoacids\tJ_allele_name:overlap_aminoacids:mismatches_aminoacids\tIs_V_allele_uniq\tIs_V_allele_uniq\tAre_both_V_and_J_alleles_uniq\n"
+            header_line = "Read_name,Partial_CDR3_AA_Seq,V_genes,D_genes,J_genes,V_allele_name:overlap_aminoacids:mismatches_aminoacids,J_allele_name:overlap_aminoacids:mismatches_aminoacids,Is_V_allele_uniq,Is_V_allele_uniq,Are_both_V_and_J_alleles_uniq\n"
             f.write(header_line)
             for x, y in imrep.just_v_dict.items():
                 for read in y:
@@ -1122,7 +1122,7 @@ if __name__ == "__main__":
                     di_j = ",".join(di_j)
                     if not di_j:
                         di_j = "NA"
-                    f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (readId, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
+                    f.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (readId, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
             for x, y in imrep.just_j_dict.items():
                for read in y:
                     if "___" in read:
@@ -1157,7 +1157,7 @@ if __name__ == "__main__":
                     di_j = ",".join(di_j)
                     if not di_j:
                         di_j = "NA"
-                    f.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (readId, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
+                    f.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (readId, x, v, "NA", j, di_v, di_j, uniq_v, uniq_j, uniq_vj))
     else:
         for cl in clones:
             for clon in imrep.clone_dict[cl[0]]:
@@ -1188,21 +1188,21 @@ if __name__ == "__main__":
                     di_j = ",".join(di_j)
                     if not di_j:
                         di_j = "NA"
-                    final_clones.append(cl[0] + "\t%s" % cl[1] + "\t%s\t" + "%s\t%s\t%s\n" % (cl[2], cl[3], cl[4]))
+                    final_clones.append(cl[0] + ",%s" % cl[1] + ",%s," + "%s,%s,%s\n" % (cl[2], cl[3], cl[4]))
     final_clones = Counter(final_clones)
-    print "%s partial-V CDR3 found" % len(imrep.just_v_dict)
-    print "%s partial-J CDR3 found" % len(imrep.just_j_dict)
+    print ("%s partial-V CDR3 found" % len(imrep.just_v_dict))
+    print ("%s partial-J CDR3 found" % len(imrep.just_j_dict))
     if len(final_clones):
-        print "%s full CDR3 found:" % len(final_clones)
+        print ("%s full CDR3 found:" % len(final_clones))
         for x in ['IGH','IGK','IGL','TRA','TRB','TRD','TRG']:
             y = imrep.clonotype_CDR3_count_dict.get(x, 0)
-            print "\t- %s of type %s" % (y, x)
+            print (",- %s of type %s" % (y, x))
     else:
-        print "No full CDR3 found"
+        print ("No full CDR3 found")
     clones = []
     for x, y in final_clones.items():
         clones.append(x % y)
     dumpClones2(clones, outFile)
-    print "Done. Bye-bye"
+    print ("Done. Bye-bye")
 
 
