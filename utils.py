@@ -61,11 +61,11 @@ def nucleotide2protein2(inString):
 def dumpClones(clones, outFile):
     with open(outFile, "w") as f:
         for clone in clones:
-            f.write(("\t".join(["%s"] * len(clone)) + "\n") % tuple(clone))
+            f.write((",".join(["%s"] * len(clone)) + "\n") % tuple(clone))
 
 
 def dumpClones2(clones, outFile):
-    header_line = "CDR3_AA_Seq\tChain_type\tRead_count\tV_chains\tD_chains\tJ_chains\n"
+    header_line = "CDR3_AA_Seq,Chain_type,Read_count,V_chains,D_chains,J_chains\n"
     with open(outFile, "w") as f:
         f.write(header_line)
         for clone in clones:

@@ -1085,6 +1085,8 @@ if __name__ == "__main__":
                             di_j = "NA"
                         f.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (readId, cl[0], cl[1], cl[2], cl[3], di_v, di_j, uniq_v, uniq_j, uniq_vj))
                         final_clones.append(cl[0] + ",%s" % cl[1] + ",%s," + "%s,%s,%s\n" % (cl[2], cl[3], cl[4]))
+
+
         with open(outDir + "/" + "partial_cdr3_%s.txt" % sampleName, "w") as f:
             header_line = "Read_name,Partial_CDR3_AA_Seq,V_genes,D_genes,J_genes,V_allele_name:overlap_aminoacids:mismatches_aminoacids,J_allele_name:overlap_aminoacids:mismatches_aminoacids,Is_V_allele_uniq,Is_V_allele_uniq,Are_both_V_and_J_alleles_uniq\n"
             f.write(header_line)
@@ -1188,7 +1190,7 @@ if __name__ == "__main__":
                     di_j = ",".join(di_j)
                     if not di_j:
                         di_j = "NA"
-                    final_clones.append(cl[0] + ",%s" % cl[1] + ",%s," + "%s,%s,%s\n" % (cl[2], cl[3], cl[4]))
+                    final_clones.append(cl[0] + ",%s" % cl[1] + ",%s," + "%s,%s,%s\n" % (cl[2].replace(",",";"), cl[3].replace(",",";"), cl[4].replace(",",";")))
     final_clones = Counter(final_clones)
     print ("%s partial-V CDR3 found" % len(imrep.just_v_dict))
     print ("%s partial-J CDR3 found" % len(imrep.just_j_dict))
@@ -1196,7 +1198,7 @@ if __name__ == "__main__":
         print ("%s full CDR3 found:" % len(final_clones))
         for x in ['IGH','IGK','IGL','TRA','TRB','TRD','TRG']:
             y = imrep.clonotype_CDR3_count_dict.get(x, 0)
-            print (",- %s of type %s" % (y, x))
+            print ("\t- %s of type %s" % (y, x))
     else:
         print ("No full CDR3 found")
     clones = []

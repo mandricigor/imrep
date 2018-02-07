@@ -107,7 +107,7 @@ if __name__ == "__main__":
     import sys
     def dumpClones2(clones, outFile):
         """This function is taken from utils.py"""
-        header_line = "CDR3_AA_Seq\tChain_type\tRead_count\tV_chains\tD_chains\tJ_chains\n"
+        header_line = "CDR3_AA_Seq,Chain_type,Read_count,V_chains,D_chains,J_chains\n"
         with open(outFile, "w") as f:
             f.write(header_line)
             for clone in clones:
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         clustered = [cclone for cclone in clustered if cclone[1] > 1]
         for x, y, z in clustered:
             line = [x, chtype, y] + typedict[x]
-            result.append("%s\n" % "\t".join(map(str, line)))
+            result.append("%s\n" % ",".join(map(str, line)))
     dumpClones2(result, outputfile)
 
 
