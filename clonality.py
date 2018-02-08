@@ -86,10 +86,9 @@ base=os.path.splitext(basename(args.inFile))[0]
 
 
 with open(args.inFile) as csvfile:
-    readCSV = csv.reader(csvfile,delimiter=";")
+    readCSV = csv.reader(csvfile)
     next(readCSV)
     for row in readCSV:
-        print(row,len(row))
 
 
 
@@ -104,7 +103,7 @@ with open(args.inFile) as csvfile:
         if row!=[]:
 
             #extract non-ambiguous recombinations
-            if V.count(',')==0 and J.count(',')==0:
+            if V.count(';')==0 and J.count(';')==0:
                 if row[1]=="IGH":
                         if (V,J) not in set(recomb_IGH.keys()):
                             recomb_IGH[(V,J)]=0
@@ -171,13 +170,13 @@ with open(args.inFile) as csvfile:
                     print ("ERROR : ",row)
                     sys.exit(1)
 
-
+sample=os.path.split(os.path.dirname(args.outDir))[1]
 
 
 
 #----------------
 #CDR3s
-fileSTAT=open(args.outDir+"/summary.cdr3."+args.outDir+".txt","w")
+fileSTAT=open(args.outDir+"/summary.cdr3.txt","w")
 
 
 fileSTAT.write("SAMPLE,nIGH,nIGK,nIGL,nTCRA,nTCRB,nTCRD,nTCRG, loadIGH,loadIGK,loadIGL,loadTCRA,loadTCRB,loadTCRD,loadTCRG,alphaIGH,alphaIGK,alphaIGL,alphaTCRA,alphaTCRB,alphaTCRD,alphaTCRG")
@@ -211,7 +210,8 @@ alphaTCRD=str(sdi(Counter(cdr3_TCRD)))
 alphaTCRG=str(sdi(Counter(cdr3_TCRG)))
 
 
-              
+#prefix
+
 fileSTAT.write(base+","+nIGH+","+nIGK+","+nIGL+","+nTCRA+","+nTCRB+","+nTCRD+","+nTCRG+","+loadIGH+","+loadIGK+","+loadIGL+","+loadTCRA+","+loadTCRB+","+loadTCRD+","+loadTCRG+","+alphaIGH+","+alphaIGK+","+alphaIGL+","+alphaTCRA+","+alphaTCRB+","+alphaTCRD+","+alphaTCRG)
 fileSTAT.write("\n")
 
@@ -227,28 +227,29 @@ print ("Total number of TCRD CDR3 is", len(set(cdr3_TCRD)))
 
 #save CDR3s
 
-write_cdr3(args.outDir+"/IGH.cdr3."+args.outDir+".csv",cdr3_IGH)
-write_cdr3(args.outDir+"/IGK.cdr3."+args.outDir+".csv",cdr3_IGK)
-write_cdr3(args.outDir+"/IGL.cdr3."+args.outDir+".csv",cdr3_IGL)
-write_cdr3(args.outDir+"/TCRA.cdr3."+args.outDir+".csv",cdr3_TCRA)
-write_cdr3(args.outDir+"/TCRB.cdr3."+args.outDir+".csv",cdr3_TCRA)
-write_cdr3(args.outDir+"/TCRD.cdr3."+args.outDir+".csv",cdr3_TCRD)
-write_cdr3(args.outDir+"/TCRG.cdr3."+args.outDir+".csv",cdr3_TCRG)
+write_cdr3(args.outDir+"/IGH.cdr3."+sample+".csv",cdr3_IGH)
+write_cdr3(args.outDir+"/IGK.cdr3."+sample+".csv",cdr3_IGK)
+write_cdr3(args.outDir+"/IGL.cdr3."+sample+".csv",cdr3_IGL)
+write_cdr3(args.outDir+"/TCRA.cdr3."+sample+".csv",cdr3_TCRA)
+write_cdr3(args.outDir+"/TCRB.cdr3."+sample+".csv",cdr3_TCRA)
+write_cdr3(args.outDir+"/TCRD.cdr3."+sample+".csv",cdr3_TCRD)
+write_cdr3(args.outDir+"/TCRG.cdr3."+sample+".csv",cdr3_TCRG)
 
 #save VJ
-write_VJ(args.outDir+"/IGH.VJ."+args.outDir+".csv",recomb_IGH)
-write_VJ(args.outDir+"/IGK.VJ."+args.outDir+".csv",recomb_IGK)
-write_VJ(args.outDir+"/IGL.VJ."+args.outDir+".csv",recomb_IGL)
-write_VJ(args.outDir+"/TCRA.VJ."+args.outDir+".csv",recomb_TCRA)
-write_VJ(args.outDir+"/TCRB.VJ."+args.outDir+".csv",recomb_TCRA)
-write_VJ(args.outDir+"/TCRD.VJ."+args.outDir+".csv",recomb_TCRD)
-write_VJ(args.outDir+"/TCRG.VJ."+args.outDir+".csv",recomb_TCRG)
+write_VJ(args.outDir+"/IGH.VJ."+sample+".csv",recomb_IGH)
+write_VJ(args.outDir+"/IGK.VJ."+sample+".csv",recomb_IGK)
+write_VJ(args.outDir+"/IGL.VJ."+sample+".csv",recomb_IGL)
+write_VJ(args.outDir+"/TCRA.VJ."+sample+".csv",recomb_TCRA)
+write_VJ(args.outDir+"/TCRB.VJ."+sample+".csv",recomb_TCRA)
+write_VJ(args.outDir+"/TCRD.VJ."+sample+".csv",recomb_TCRD)
+write_VJ(args.outDir+"/TCRG.VJ."+sample+".csv",recomb_TCRG)
 
 
 
 #save CDR3s with FREQ
 #IGH
-fileIGH=open(args.outDir+"/IGH.cdr3.FREQ."+args.outDir+".csv","w")
+fileIGH=open(args.outDir+"/IGH.cdr3.FREQ."+sample+".csv","w")
+fileIGH.write("CDR3,count,relative.frequency\n")
 N = sum(cdr3_IGH.values())
 for key, value in sorted(cdr3_IGH.items()):
     fileIGH.write(key+","+str(value)+","+str(value/float(N)))
@@ -256,7 +257,8 @@ for key, value in sorted(cdr3_IGH.items()):
 fileIGH.close()
 
 #IGK
-fileIGK=open(args.outDir+"/IGK.cdr3.FREQ."+args.outDir+".csv","w")
+fileIGK=open(args.outDir+"/IGK.cdr3.FREQ."+sample+".csv","w")
+fileIGK.write("CDR3,count,relative.frequency\n")
 N = sum(cdr3_IGK.values())
 for key, value in sorted(cdr3_IGK.items()):
     fileIGK.write(key+","+str(value)+","+str(value/float(N)))
@@ -264,7 +266,8 @@ for key, value in sorted(cdr3_IGK.items()):
 fileIGK.close()
 
 #IGL
-fileIGL=open(args.outDir+"/IGL.cdr3.FREQ."+args.outDir+".csv","w")
+fileIGL=open(args.outDir+"/IGL.cdr3.FREQ."+sample+".csv","w")
+fileIGL.write("CDR3,count,relative.frequency\n")
 N = sum(cdr3_IGL.values())
 for key, value in sorted(cdr3_IGL.items()):
     fileIGL.write(key+","+str(value)+","+str(value/float(N)))
@@ -273,7 +276,8 @@ fileIGL.close()
 
 
 #TCRA
-fileTCRA=open(args.outDir+"/TCRA.cdr3.FREQ."+args.outDir+".csv","w")
+fileTCRA=open(args.outDir+"/TCRA.cdr3.FREQ."+sample+".csv","w")
+fileTCRA.write("CDR3,count,relative.frequency\n")
 N = sum(cdr3_TCRA.values())
 for key, value in sorted(cdr3_TCRA.items()):
     fileTCRA.write(key+","+str(value)+","+str(value/float(N)))
@@ -282,7 +286,8 @@ fileTCRA.close()
 
 
 #TCRB
-fileTCRB=open(args.outDir+"/TCRB.cdr3.FREQ."+args.outDir+".csv","w")
+fileTCRB=open(args.outDir+"/TCRB.cdr3.FREQ."+sample+".csv","w")
+fileTCRB.write("CDR3,count,relative.frequency\n")
 N = sum(cdr3_TCRB.values())
 for key, value in sorted(cdr3_TCRB.items()):
     fileTCRB.write(key+","+str(value)+","+str(value/float(N)))
@@ -290,7 +295,8 @@ for key, value in sorted(cdr3_TCRB.items()):
 fileTCRB.close()
 
 #TCRG
-fileTCRG=open(args.outDir+"/TCRG.cdr3.FREQ."+args.outDir+".csv","w")
+fileTCRG=open(args.outDir+"/TCRG.cdr3.FREQ."+sample+".csv","w")
+fileTCRG.write("CDR3,count,relative.frequency\n")
 N = sum(cdr3_TCRG.values())
 for key, value in sorted(cdr3_TCRG.items()):
     fileTCRG.write(key+","+str(value)+","+str(value/float(N)))
@@ -298,7 +304,8 @@ for key, value in sorted(cdr3_TCRG.items()):
 fileTCRG.close()
 
 #TCRD
-fileTCRD=open(args.outDir+"/TCRD.cdr3.FREQ."+args.outDir+".csv","w")
+fileTCRD=open(args.outDir+"/TCRD.cdr3.FREQ."+sample+".csv","w")
+fileTCRD.write("CDR3,count,relative.frequency\n")
 N = sum(cdr3_TCRD.values())
 for key, value in sorted(cdr3_TCRD.items()):
     fileTCRD.write(key+","+str(value)+","+str(value/float(N)))
@@ -309,7 +316,7 @@ fileTCRD.close()
 #------------------------------
 #VJs with FREQ
 
-fileSTAT = open(args.outDir + "/summary.VJ." + args.outDir + ".txt", "w")
+fileSTAT = open(args.outDir + "/summary.VJ.txt", "w")
 
 fileSTAT.write(
     "SAMPLE,nIGH,nIGK,nIGL,nTCRA,nTCRB,nTCRD,nTCRG, loadIGH,loadIGK,loadIGL,loadTCRA,loadTCRB,loadTCRD,loadTCRG,alphaIGH,alphaIGK,alphaIGL,alphaTCRA,alphaTCRB,alphaTCRD,alphaTCRG")
@@ -352,7 +359,8 @@ print ("Total number of TCRG VJ recombinations is", len(set(recomb_TCRG)))
 print ("Total number of TCRD VJ recombinations is", len(set(recomb_TCRD)))
 
 # IGH
-fileIGH = open(args.outDir + "/IGH.VJ.FREQ." + args.outDir + ".csv", "w")
+fileIGH = open(args.outDir + "/IGH.VJ.FREQ." + sample + ".csv", "w")
+fileIGH.write("VJ,count,relative.frequency\n")
 N = sum(recomb_IGH.values())
 for key, value in sorted(recomb_IGH.items()):
     fileIGH.write(key[0] + "-" + key[1]+ ","+ str(value) + "," + str(value / float(N)))
@@ -361,7 +369,8 @@ for key, value in sorted(recomb_IGH.items()):
 fileIGH.close()
 
 # IGK
-fileIGK = open(args.outDir + "/IGK.VJ.FREQ." + args.outDir + ".csv", "w")
+fileIGK = open(args.outDir + "/IGK.VJ.FREQ." + sample + ".csv", "w")
+fileIGK.write("VJ,count,relative.frequency\n")
 N = sum(recomb_IGK.values())
 for key, value in sorted(recomb_IGK.items()):
     fileIGK.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
@@ -369,7 +378,8 @@ for key, value in sorted(recomb_IGK.items()):
 fileIGK.close()
 
 # IGL
-fileIGL = open(args.outDir + "/IGL.VJ.FREQ." + args.outDir + ".csv", "w")
+fileIGL = open(args.outDir + "/IGL.VJ.FREQ." + sample + ".csv", "w")
+fileIGL.write("VJ,count,relative.frequency\n")
 N = sum(recomb_IGL.values())
 for key, value in sorted(recomb_IGL.items()):
     fileIGL.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
@@ -377,7 +387,8 @@ for key, value in sorted(recomb_IGL.items()):
 fileIGL.close()
 
 # TCRA
-fileTCRA = open(args.outDir + "/TCRA.VJ.FREQ." + args.outDir + ".csv", "w")
+fileTCRA = open(args.outDir + "/TCRA.VJ.FREQ." + sample + ".csv", "w")
+fileTCRA.write("VJ,count,relative.frequency\n")
 N = sum(recomb_TCRA.values())
 for key, value in sorted(recomb_TCRA.items()):
     fileTCRA.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
@@ -385,7 +396,8 @@ for key, value in sorted(recomb_TCRA.items()):
 fileTCRA.close()
 
 # TCRB
-fileTCRB = open(args.outDir + "/TCRB.VJ.FREQ." + args.outDir + ".csv", "w")
+fileTCRB = open(args.outDir + "/TCRB.VJ.FREQ." + sample + ".csv", "w")
+fileTCRB.write("VJ,count,relative.frequency\n")
 N = sum(recomb_TCRB.values())
 for key, value in sorted(recomb_TCRB.items()):
     fileTCRB.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
@@ -393,7 +405,8 @@ for key, value in sorted(recomb_TCRB.items()):
 fileTCRB.close()
 
 # TCRG
-fileTCRG = open(args.outDir + "/TCRG.VJ.FREQ." + args.outDir + ".csv", "w")
+fileTCRG = open(args.outDir + "/TCRG.VJ.FREQ." + sample + ".csv", "w")
+fileTCRG.write("VJ,count,relative.frequency\n")
 N = sum(recomb_TCRG.values())
 for key, value in sorted(recomb_TCRG.items()):
     fileTCRG.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
@@ -401,9 +414,18 @@ for key, value in sorted(recomb_TCRG.items()):
 fileTCRG.close()
 
 # TCRD
-fileTCRD = open(args.outDir + "/TCRD.VJ.FREQ." + args.outDir + ".csv", "w")
+fileTCRD = open(args.outDir + "/TCRD.VJ.FREQ." + sample + ".csv", "w")
+fileTCRD.write("VJ,count,relative.frequency\n")
 N = sum(recomb_TCRD.values())
 for key, value in sorted(recomb_TCRD.items()):
     fileTCRD.write(key[0] + "-" + key[1] + "," + str(value) + "," + str(value / float(N)))
     fileTCRD.write("\n")
 fileTCRD.close()
+
+
+print ("All results are summarized in ",args.outDir)
+print ("Relative frequencies and counts of assembled CDR3s are saved in individuals files.")
+print ("For example, relative frequencies and counts of IGH chain are saved in:")
+print (args.outDir+"/IGH.cdr3.FREQ."+sample+".csv")
+
+print ("Done!")
