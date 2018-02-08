@@ -1084,7 +1084,8 @@ if __name__ == "__main__":
                         if not di_j:
                             di_j = "NA"
                         f.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (readId, cl[0], cl[1], cl[2], cl[3], di_v, di_j, uniq_v, uniq_j, uniq_vj))
-                        final_clones.append(cl[0] + ",%s" % cl[1] + ",%s," + "%s,%s,%s\n" % (cl[2], cl[3], cl[4]))
+                        final_clones.append(cl[0] + ",%s" % cl[1] + ",%s," + "%s,%s,%s\n" % (cl[2].replace(",",";"), cl[3].replace(",",";"), cl[4].replace(",",";")))
+
 
 
         with open(outDir + "/" + "partial_cdr3_%s.txt" % sampleName, "w") as f:
