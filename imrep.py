@@ -440,6 +440,16 @@ class ImReP(object):
                 #firstLine = file_check.readline()
                 file_content = f.readlines()
 
+
+        # serghei's trick
+        a_read_line = file_content[1].strip()
+        readlen = len(a_read_line)
+        if readlen != 50:
+            if self.__settings.noOverlapStep is False:
+                self.__settings.noOverlapStep = True
+
+
+
         if formatFile == "fasta":
             while not file_content[0][0] == ">":
                 file_content = file_content[1:]
