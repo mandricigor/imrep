@@ -64,7 +64,7 @@ def extract_unmapped(file):
 
 
 
-def extract_mapped(tag,file,k):
+def extract_mapped(tag,file):
     samfile = pysam.AlignmentFile(args.reads_file, "rb")
     
     if tag=="IGH":
@@ -92,22 +92,30 @@ def extract_mapped(tag,file,k):
             y=116009954
 
 
-
-    
+        k=0
         for read in samfile.fetch(chr,x,y):
+            
             rl=read.infer_query_length()
             c=read.cigartuples
             if c: # to avoid CIGAR of type None
-                if len(c)==1:
                     type=read.cigartuples[0][0]
                     length=read.cigartuples[0][1]
+		            
                     if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
                         k+=1
                         file.write(">"+str(read.query_name))
                         file.write("\n")
                         file.write(str(read.query_sequence))
                         file.write("\n")
+            else:
+                k+=1
+                file.write(">"+str(read.query_name))
+                file.write("\n")
+                file.write(str(read.query_sequence))
+                file.write("\n")
+        return k
 
+			
     elif tag=="IGK":
         
         
@@ -130,21 +138,27 @@ def extract_mapped(tag,file,k):
             x=67555636
             y=70726754
 
-        
+        k=0
         for read in samfile.fetch(chr,x,y):
             rl=read.infer_query_length()
             c=read.cigartuples
-            if c:
-                if len(c)==1:
+            if c: # to avoid CIGAR of type None
                     type=read.cigartuples[0][0]
                     length=read.cigartuples[0][1]
+                    
                     if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
                         k+=1
                         file.write(">"+str(read.query_name))
                         file.write("\n")
                         file.write(str(read.query_sequence))
                         file.write("\n")
-
+            else:
+                k+=1
+                file.write(">"+str(read.query_name))
+                file.write("\n")
+                file.write(str(read.query_sequence))
+                file.write("\n")
+        return k
 
     elif tag=="IGL":
         
@@ -174,20 +188,27 @@ def extract_mapped(tag,file,k):
 
 
 
-
+        k=0
         for read in samfile.fetch(chr,x,y):
             rl=read.infer_query_length()
             c=read.cigartuples
-            if c:
-                if len(c)==1:
+            if c: # to avoid CIGAR of type None
                     type=read.cigartuples[0][0]
                     length=read.cigartuples[0][1]
+                    
                     if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
                         k+=1
                         file.write(">"+str(read.query_name))
                         file.write("\n")
                         file.write(str(read.query_sequence))
                         file.write("\n")
+            else:
+                k+=1
+                file.write(">"+str(read.query_name))
+                file.write("\n")
+                file.write(str(read.query_sequence))
+                file.write("\n")
+        return k
 
 
     elif tag=="TRA":
@@ -216,21 +237,27 @@ def extract_mapped(tag,file,k):
     
     
 
-    
-            
+        k=0
         for read in samfile.fetch(chr,x,y):
             rl=read.infer_query_length()
             c=read.cigartuples
-            if c:
-                if len(c)==1:
+            if c: # to avoid CIGAR of type None
                     type=read.cigartuples[0][0]
                     length=read.cigartuples[0][1]
+                    
                     if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
                         k+=1
                         file.write(">"+str(read.query_name))
                         file.write("\n")
                         file.write(str(read.query_sequence))
                         file.write("\n")
+            else:
+                k+=1
+                file.write(">"+str(read.query_name))
+                file.write("\n")
+                file.write(str(read.query_sequence))
+                file.write("\n")
+        return k
 
     elif tag=="TRB":
         
@@ -254,20 +281,31 @@ def extract_mapped(tag,file,k):
             x=40891296
             y=41558371
 
-
+        k=0
         for read in samfile.fetch(chr,x,y):
             rl=read.infer_query_length()
             c=read.cigartuples
-            if c:
-                if len(c)==1:
+            
+            if c: # to avoid CIGAR of type None
                     type=read.cigartuples[0][0]
                     length=read.cigartuples[0][1]
+                    
+                    
                     if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
                         k+=1
                         file.write(">"+str(read.query_name))
                         file.write("\n")
                         file.write(str(read.query_sequence))
                         file.write("\n")
+            else:
+                k+=1
+                file.write(">"+str(read.query_name))
+                file.write("\n")
+                file.write(str(read.query_sequence))
+                file.write("\n")
+        return k
+
+
     elif tag=="TRG":
         
         
@@ -291,22 +329,27 @@ def extract_mapped(tag,file,k):
             y=19356476
     
     
-
-            
+        k=0
         for read in samfile.fetch(chr,x,y):
             rl=read.infer_query_length()
             c=read.cigartuples
-            if c:
-                if len(c)==1:
+            if c: # to avoid CIGAR of type None
                     type=read.cigartuples[0][0]
                     length=read.cigartuples[0][1]
+                    
                     if not (type==int(0) and length==rl): # if read is fully mapped for example 100M than we don't take it
                         k+=1
                         file.write(">"+str(read.query_name))
                         file.write("\n")
                         file.write(str(read.query_sequence))
                         file.write("\n")
-
+            else:
+                k+=1
+                file.write(">"+str(read.query_name))
+                file.write("\n")
+                file.write(str(read.query_sequence))
+                file.write("\n")
+        return k
 
 
     samfile.close()
@@ -959,9 +1002,10 @@ if __name__ == "__main__":
         fileNewInput=outDir+"/"+sampleName+"_input.fasta"
         file=open(fileNewInput,"w")
         for i in dict["chains"]:
-                k=0
-                extract_mapped(i,file,k)
-                print ("Number of reads extacted from ", i, "locus : ",k)
+                k=extract_mapped(i,file)
+                if i!="TRD":
+                    print ("Number of reads extacted from ", i, "locus : ",k)
+
         extract_unmapped(file)
 
         file.close()
